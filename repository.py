@@ -51,17 +51,17 @@ def extract_mfccs(data):
     mfccs = librosa.feature.mfcc(signal, sr=sr, n_mfcc=128)
     return(mfccs)
 
-def visualise_mfccs(data):
+def visualise(data):
     plt.figure(figsize=(10,5))
-    librosa.display.specshow(extract_mfccs(data),x_axis="time")
+    librosa.display.specshow(data,x_axis="time")
     plt.colorbar(format="%+2f")
     plt.savefig('testplot.jpg')
     plt.show()
     
-def lower_star_filtration(data):
+def lower_star_filtration(img):
     """
     construct a lowerstar filtration (sublevelset filtration) 
-    on the mfccs image and calculate corresponding 0-persistence
+    on an image and calculate corresponding 0-persistence
     diagram (H_0)
 
     Parameters
@@ -73,11 +73,11 @@ def lower_star_filtration(data):
     ndarray.
 
     """
-    dgm = lower_star_img(extract_mfccs(data))
+    dgm = lower_star_img(img)
     plt.figure(figsize=(10, 5))
     plt.subplot(121)
-    plt.imshow(extract_mfccs(data))
-    plt.colorbar()
+    plt.imshow(img)
+    plt.colorbar() #metti un if
     plt.title("Test Image")
     plt.subplot(122)
     plot_diagrams(dgm)
@@ -99,7 +99,7 @@ def make_life_finite(data):
     list.
 
     """
-    cps = lower_star_img(extract_mfccs(data)).tolist()
+    cps = data.tolist()
     max_finite_life=np.nanmax([c[1] for c in cps if c[1]!=np.inf])
     finite_cps=[c if c[1]<=max_finite_life else [c[0],max_finite_life+1] for c in cps]
     return finite_cps
@@ -122,18 +122,19 @@ def p_bottleneck(data_0,data_1): #Bottleneck distance con persim
     float
 
     """
-    distance_bottleneck = persim.bottleneck(make_life_finite(data_0), make_life_finite(data_1))
+    distance_bottleneck = persim.bottleneck(data_0, data_1)
     return distance_bottleneck  
 
 import gudhi
 
-def g_bottleneck_approx(data_0,data_1): #Bottleneck distance con gudhi
-    message = "Bottleneck distance approximation = " + '%.2f' % gudhi.bottleneck_distance(lower_star_img(extract_mfccs(data_0)),lower_star_img(extract_mfccs(data_1)), 0.1)
-    print(message)
+def g_bottleneck_approx(dgm_0,dgm_1): #Bottleneck distance con gudhi
+    return gudhi.bottleneck_distance(dgm_0, dgm_1, 0.1)
+    
 
 def g_bottleneck(data_0,data_1):
-    message = "Bottleneck distance value = " + '%.2f' % gudhi.bottleneck_distance(lower_star_img(extract_mfccs(data_0)),lower_star_img(extract_mfccs(data_1)))
-    print(message)
+    return gudhi.bottleneck_distance(dgm_0,dgm_1)
+    
+    
     
 
     

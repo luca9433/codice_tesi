@@ -131,8 +131,25 @@ def g_bottleneck_approx(dgm_0,dgm_1): #Bottleneck distance con gudhi
     return gudhi.bottleneck_distance(dgm_0, dgm_1, 0.1)
     
 
-def g_bottleneck(data_0,data_1):
+def g_bottleneck(dgm_0,dgm_1):
     return gudhi.bottleneck_distance(dgm_0,dgm_1)
+    
+def main():
+    data_0="C:\\Users\\Admin\\Documents\\python\\Data\\genres_original\\blues\\blues.00000.wav"
+    data_1="C:\\Users\\Admin\\Documents\\python\\Data\\genres_original\\blues\\blues.00001.wav"
+    create_audio_object(data_0)
+    create_audio_object(data_1)
+    visualise(extract_mfccs(data_0))
+    visualise(extract_mfccs(data_1))
+    lower_star_filtration(extract_mfccs(data_0))
+    lower_star_filtration(extract_mfccs(data_1))
+    dgm_0=make_life_finite(lower_star_img(extract_mfccs(data_0)))
+    dgm_1=make_life_finite(lower_star_img(extract_mfccs(data_1)))
+    print(g_bottleneck_approx(dgm_0,dgm_1))
+    print(g_bottleneck(dgm_0,dgm_1))
+    
+if __name__=="__main__":
+    main()
     
     
     

@@ -58,7 +58,7 @@ def visualise(data):
     plt.savefig('testplot.jpg')
     plt.show()
     
-def lower_star_filtration(img):
+def lower_star_filtration(img, plot=False):
     """
     construct a lowerstar filtration (sublevelset filtration) 
     on an image and calculate corresponding 0-persistence
@@ -74,16 +74,17 @@ def lower_star_filtration(img):
 
     """
     dgm = lower_star_img(img)
-    plt.figure(figsize=(10, 5))
-    plt.subplot(121)
-    plt.imshow(img)
-    plt.colorbar() #metti un if
-    plt.title("Test Image")
-    plt.subplot(122)
-    plot_diagrams(dgm)
-    plt.title("0-D Persistence Diagram")
-    plt.tight_layout()
-    plt.show()
+    if plot:
+        plt.figure(figsize=(10, 5))
+        plt.subplot(121)
+        plt.imshow(img)
+        plt.colorbar()
+        plt.title("Test Image")
+        plt.subplot(122)
+        plot_diagrams(dgm)
+        plt.title("0-D Persistence Diagram")
+        plt.tight_layout()
+        plt.show()
     return dgm
 
 def make_life_finite(data):

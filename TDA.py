@@ -134,6 +134,15 @@ def g_bottleneck_approx(dgm_0,dgm_1): #Bottleneck distance con gudhi
 
 def g_bottleneck(dgm_0,dgm_1):
     return gudhi.bottleneck_distance(dgm_0,dgm_1)
+
+def Persistence_Image(data):
+    cps=data.tolist()
+    max_finite_life=np.nanmax([c[1] for c in cps if c[1]!=np.inf])
+    finite_cps=[c if c[1]<=max_finite_life else [c[0],max_finite_life+1] for c in cps]
+    pimgr = PersistenceImager(pixel_size=1)
+    pimgr.fit(finite_cps) 
+    imgs = pimgr.transform(finite_cps)
+    return imgs
     
 def main():
     data_0="C:\\Users\\Admin\\Documents\\python\\Data\\genres_original\\blues\\blues.00000.wav"
@@ -152,7 +161,7 @@ def main():
 if __name__=="__main__":
     main()
     
-#Test Git Bash 
+
     
     
     

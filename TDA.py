@@ -157,8 +157,7 @@ def get_file_paths(dirname):
             file_paths.append(filepath)  
     return file_paths
 
-def main():
-    class Audio:
+class Audio:
     def __init__(self,path):
         self.path = path
             
@@ -166,6 +165,7 @@ def main():
         dgm=lower_star_img(extract_mfccs(self.path))
         return make_life_finite(dgm)
 
+def main():
 wav=[x for x in  get_file_paths('C:\\Users\\Admin\\Documents\\python\\Data') if '.wav' in x]
 audios = [Audio(p) for p in wav]
 diagrams = [a.get_diagram() for a in audios] #applico il metodo get_diagrams della classe Audio per estrarre i diagrammi di persistenza

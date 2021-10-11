@@ -44,6 +44,7 @@ def create_audio_object(data):
     """
     signal, sr = librosa.load(data)
     return ipd.Audio(data,rate=sr)
+    
 
     
 def extract_mfccs(data):
@@ -135,29 +136,41 @@ def g_bottleneck_approx(dgm_0,dgm_1): #Bottleneck distance con gudhi
 def g_bottleneck(dgm_0,dgm_1):
     return gudhi.bottleneck_distance(dgm_0,dgm_1)
 
-def Persistence_Image(data):
-    cps=data.tolist()
-    max_finite_life=np.nanmax([c[1] for c in cps if c[1]!=np.inf])
-    finite_cps=[c if c[1]<=max_finite_life else [c[0],max_finite_life+1] for c in cps]
+def Persistence_Image(data, plot=False):
     pimgr = PersistenceImager(pixel_size=1)
-    pimgr.fit(finite_cps) 
-    imgs = pimgr.transform(finite_cps)
+    pimgr.fit(data) 
+    imgs = pimgr.transform(data)
+    if plot:
+        fig, axs = plt.subplots(1, 3, figsize=(10,5)) #da rivedere parte dentro l'if
+        axs[0].set_title("Persistence Image")
+        pimgr.plot_image(imgs, ax=axs[0])
+        plt.tight_layout()
     return imgs
-    
+
+import os
+
+def get_file_paths(dirname):
+    file_paths = []  
+    for root, directories, files in os.walk(dirname):
+        for filename in files:
+            filepath = os.path.join(root, filename)
+            file_paths.append(filepath)  
+    return file_paths
+
 def main():
-    data_0="C:\\Users\\Admin\\Documents\\python\\Data\\genres_original\\blues\\blues.00000.wav"
-    data_1="C:\\Users\\Admin\\Documents\\python\\Data\\genres_original\\blues\\blues.00001.wav"
-    create_audio_object(data_0)
-    create_audio_object(data_1)
-    visualise(extract_mfccs(data_0))
-    visualise(extract_mfccs(data_1))
-    lower_star_filtration(extract_mfccs(data_0))
-    lower_star_filtration(extract_mfccs(data_1))
-    dgm_0=make_life_finite(lower_star_img(extract_mfccs(data_0)))
-    dgm_1=make_life_finite(lower_star_img(extract_mfccs(data_1)))
-    print(g_bottleneck_approx(dgm_0,dgm_1))
-    print(g_bottleneck(dgm_0,dgm_1))
-    
+    class Audio:
+    def __init__(self,path):
+        self.path = path
+            
+    def get_diagram(self):
+        dgm=lower_star_img(extract_mfccs(self.path))
+        return make_life_finite(dgm)
+
+wav=[x for x in  get_file_paths('C:\\Users\\Admin\\Documents\\python\\Data') if '.wav' in x]
+audios = [Audio(p) for p in wav]
+diagrams = [a.get_diagram() for a in audios] #applico il metodo get_diagrams della classe Audio per estrarre i diagrammi di persistenza
+Persistence_Image(diagrams)   
+
 if __name__=="__main__":
     main()
     

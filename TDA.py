@@ -168,7 +168,7 @@ class Audio:
 def main():
 wav=[x for x in  get_file_paths('C:\\Users\\Admin\\Documents\\python\\Data') if '.wav' in x]
 audios = [Audio(p) for p in wav]
-diagrams = [a.get_diagram() for a in audios] #applico il metodo get_diagrams della classe Audio per estrarre i diagrammi di persistenza
+diagrams = [a.get_diagram() for a in audios] #applico il metodo get_diagrams della classe Audio per estrarre i diagrammi di persistenza, che inserisco in una lista da passare come argomento di Persistence_Image
 Persistence_Image(diagrams)   
 
 if __name__=="__main__":

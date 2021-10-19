@@ -141,9 +141,9 @@ def Persistence_Image(data, plot=False):
     pimgr.fit(data) 
     imgs = pimgr.transform(data)
     if plot:
-        fig, axs = plt.subplots(1, 3, figsize=(10,5)) #da rivedere parte dentro l'if
-        axs[0].set_title("Persistence Image")
-        pimgr.plot_image(imgs, ax=axs[0])
+        fig, axs = plt.subplots(1, 1, figsize=(10,5)) #da rivedere parte dentro l'if
+        axs.set_title("Persistence Image")
+        pimgr.plot_image(imgs, ax=axs)
         plt.tight_layout()
     return imgs
 
@@ -164,17 +164,48 @@ class Audio:
     def get_diagram(self):
         dgm=lower_star_img(extract_mfccs(self.path))
         return make_life_finite(dgm)
+    
+from sklearn.datasets import load_digits
+from sklearn.model_selection import train_test_split, cross_val_score
+from sklearn.preprocessing import StandardScaler 
+import seaborn as sns
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.svm import SVC
+import umap.umap_ as umap
+    
+def PI_reduce(img): #reduction of persistence images to 2 dimensions
+    reducer = umap.UMAP()
+    reduction = reducer.fit_transform(img)
+    return reduction
+    
 
 def main():
 wav=[x for x in  get_file_paths('C:\\Users\\Admin\\Documents\\python\\Data') if '.wav' in x]
 audios = [Audio(p) for p in wav]
 diagrams = [a.get_diagram() for a in audios] #applico il metodo get_diagrams della classe Audio per estrarre i diagrammi di persistenza, che inserisco in una lista da passare come argomento di Persistence_Image
-Persistence_Image(diagrams)   
+Persistence_Image(diagrams)
+dz = {"blues":["blues.00000.npy", "blues.00001.npy"],"classical":["classical.00000.npy", "classical.00001.npy"],"country":["country.00000.npy", "country.00001.npy"],"disco":["disco.00000.npy", "disco.00001.npy"], "hiphop": ["hiphop.00000.npy", "hiphop.00001.npy"],"jazz":["jazz.00000.npy", "jazz.00001.npy"],"metal":["metal.00000.npy","metal.00001.npy"],"pop":["pop.00000.npy", "pop.00001.npy"],"reggae":["reggae.00000.npy", "reggae.00001.npy"],"rock":["rock.00000.npy", "rock.00001.npy"]}   
+genres_data_0 = [PI_reduce(np.load(dz[i][0])) for i in dz.keys()]
+genres_data_1 = [PI_reduce(np.load(dz[i][1])) for i in dz.keys()]
+#UMAP 2D reduction of 2 tracks for each genre:
+plt.figure(figsize=(20,10))
+for i in range(len(genres_data_0)):
+    plt.scatter(
+    genres_data_0[i][:, 0],
+    genres_data_0[i][:, 1],
+    c=[sns.color_palette()[i]])
+for i in range(len(genres_data_1)):
+    plt.scatter(
+    genres_data_1[i][:, 0],
+    genres_data_1[i][:, 1],
+    c=[sns.color_palette()[i]])
+plt.legend(dz.keys())
+plt.gca().set_aspect('equal', 'datalim')
+plt.title('UMAP projections of persistence images', fontsize=24)
 
 if __name__=="__main__":
     main()
     
-#modified
     
     
     

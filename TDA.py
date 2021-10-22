@@ -4,13 +4,8 @@ Created on Sat Sep 25 23:54:50 2021
 
 @author: Admin
 """
-<<<<<<< HEAD
 import pandas as pd
-||||||| 9c3d4c5
-
-=======
 import os
->>>>>>> a81c14d710e31ca40637cc7c95a03795a3408398
 import numpy as np
 import matplotlib.pyplot as plt
 import scipy
@@ -21,10 +16,9 @@ import librosa
 import librosa.display
 import IPython.display as ipd
 
-from persim import plot_diagrams
+import persim
+import gudhi
 from ripser import ripser, lower_star_img
-
-<<<<<<< HEAD
 from itertools import product
 
 import time
@@ -34,7 +28,6 @@ from scipy.stats import multivariate_normal as mvn
 import matplotlib.pyplot as plt
 
 from ripser import Rips
-from persim import PersistenceImager
 
 import umap.umap_ as umap
 
@@ -54,8 +47,6 @@ import math
 import requests
 
 
-||||||| 9c3d4c5
-=======
 from sklearn.datasets import load_digits
 from sklearn.model_selection import train_test_split, cross_val_score
 from sklearn.preprocessing import StandardScaler 
@@ -64,7 +55,6 @@ from sklearn.neighbors import KNeighborsClassifier
 from sklearn.svm import SVC
 import umap.umap_ as umap
 
->>>>>>> a81c14d710e31ca40637cc7c95a03795a3408398
 def create_audio_object(data):
     """
     
@@ -153,8 +143,6 @@ def make_life_finite(data):
     finite_cps=[c if c[1]<=max_finite_life else [c[0],max_finite_life+1] for c in cps]
     return finite_cps
 
-import persim
-
 
 def p_bottleneck(data_0,data_1): #Bottleneck distance con persim
     """
@@ -174,7 +162,6 @@ def p_bottleneck(data_0,data_1): #Bottleneck distance con persim
     distance_bottleneck = persim.bottleneck(data_0, data_1)
     return distance_bottleneck  
 
-import gudhi
 
 def g_bottleneck_approx(dgm_0,dgm_1): #Bottleneck distance con gudhi
     return gudhi.bottleneck_distance(dgm_0, dgm_1, 0.1)
@@ -182,17 +169,6 @@ def g_bottleneck_approx(dgm_0,dgm_1): #Bottleneck distance con gudhi
 
 def g_bottleneck(dgm_0,dgm_1):
     return gudhi.bottleneck_distance(dgm_0,dgm_1)
-
-def Persistence_Image(data, plot=False):
-    pimgr = PersistenceImager(pixel_size=1)
-    pimgr.fit(data) 
-    imgs = pimgr.transform(data)
-    if plot:
-        fig, axs = plt.subplots(1, 1, figsize=(10,5)) #da rivedere parte dentro l'if
-        axs.set_title("Persistence Image")
-        pimgr.plot_image(imgs, ax=axs)
-        plt.tight_layout()
-    return imgs
 
 def get_file_paths(dirname):
     file_paths = []  
@@ -210,20 +186,46 @@ class Audio:
         dgm=lower_star_img(extract_mfccs(self.path))
         return make_life_finite(dgm)
     
-
+def Persistence_Image(data, plot=False):
+    pimgr = PersistenceImager(pixel_size=1)
+    pimgr.fit(data) 
+    imgs = pimgr.transform(data)
+    if plot:
+        fig, axs = plt.subplots(1, 1, figsize=(10,5)) #da rivedere parte dentro l'if
+        axs.set_title("Persistence Image")
+        pimgr.plot_image(imgs, ax=axs)
+        plt.tight_layout()
+    return imgs
     
-def PI_reduce(img): #reduction of persistence images to 2 dimensions
-    reducer = umap.UMAP()
-    reduction = reducer.fit_transform(img)
-    return reduction
+
+def PI_umap_reduce(imgs): #reduction of persistence images to 2 dimensions
+    X_train = np.array([np.ndarray.flatten(p) for p in imgs])
+    reducer = umap.UMAP(n_components=2, n_neighbors=5, random_state=42, transform_seed=42, verbose=False)
+    reducer.fit(X_train)
+    genres_umap = reducer.transform(X_train)
+    return genres_umap
+
+def PI_proj_umap_plot(data, labels, colors):
+    fig = plt.figure(1, figsize=(10, 10))
+    plt.clf()
+    plt.scatter(
+        data[:, 0],
+        data[:, 1],
+        c=colors,
+        cmap=plt.cm.nipy_spectral,
+        edgecolor="k",
+        label=labels,
+    )
+    plt.colorbar(boundaries=np.arange(11) - 0.5).set_ticks(np.arange(10))
+    plt.savefig("genres_PDs_2Dprojections_umap.svg")
+    
+    
     
 
-<<<<<<< HEAD
 def main(path_to_data_folder="C:\\Users\\Admin\\Documents\\python"):
     
     persistence_image_paths = [os.path.join(path_to_data_folder, f) for f in os.listdir(path_to_data_folder) if ".npy" in f]
    
-    
     blues_images = np.array([np.load(path) for path in persistence_image_paths if "\\blues.00" in path])
     
     classical_images = np.array([np.load(path) for path in persistence_image_paths if "\\classical.00" in path])
@@ -326,84 +328,7 @@ def main(path_to_data_folder="C:\\Users\\Admin\\Documents\\python"):
     )
     plt.colorbar(boundaries=np.arange(11) - 0.5).set_ticks(np.arange(10))
     plt.savefig("genres_PDs_2Dprojections_umap.svg")
-    
-||||||| 9c3d4c5
-def main():
-wav=[x for x in  get_file_paths('C:\\Users\\Admin\\Documents\\python\\Data') if '.wav' in x]
-audios = [Audio(p) for p in wav]
-diagrams = [a.get_diagram() for a in audios] #applico il metodo get_diagrams della classe Audio per estrarre i diagrammi di persistenza, che inserisco in una lista da passare come argomento di Persistence_Image
-Persistence_Image(diagrams)
-dz = {"blues":["blues.00000.npy", "blues.00001.npy"],"classical":["classical.00000.npy", "classical.00001.npy"],"country":["country.00000.npy", "country.00001.npy"],"disco":["disco.00000.npy", "disco.00001.npy"], "hiphop": ["hiphop.00000.npy", "hiphop.00001.npy"],"jazz":["jazz.00000.npy", "jazz.00001.npy"],"metal":["metal.00000.npy","metal.00001.npy"],"pop":["pop.00000.npy", "pop.00001.npy"],"reggae":["reggae.00000.npy", "reggae.00001.npy"],"rock":["rock.00000.npy", "rock.00001.npy"]}   
-genres_data_0 = [PI_reduce(np.load(dz[i][0])) for i in dz.keys()]
-genres_data_1 = [PI_reduce(np.load(dz[i][1])) for i in dz.keys()]
-#UMAP 2D reduction of 2 tracks for each genre:
-plt.figure(figsize=(20,10))
-for i in range(len(genres_data_0)):
-    plt.scatter(
-    genres_data_0[i][:, 0],
-    genres_data_0[i][:, 1],
-    c=[sns.color_palette()[i]])
-for i in range(len(genres_data_1)):
-    plt.scatter(
-    genres_data_1[i][:, 0],
-    genres_data_1[i][:, 1],
-    c=[sns.color_palette()[i]])
-plt.legend(dz.keys())
-plt.gca().set_aspect('equal', 'datalim')
-plt.title('UMAP projections of persistence images', fontsize=24)
-=======
-def main(path_to_data_folder="data"):
-    """
-    data 
-        - blues
-            - blues.0000.npy
-            - blues.0001.npy
-        - country        
-    """
-    genres =
-    genre_subfolders = [os.path.join(path_to_data_folder, f) 
-                        for f in os.listdir(path_to_data_folder)]
-    persistence_image_paths = [[os.path.join(genre_subfolder, f)
-                                for f in os.listdir(genre_subfolder)
-                                if ".npy" in f]
-                               for genre_subfolder in genre_subfolders]
-    """
-    persistence_image_paths = [
-        ["./data/blues/blues.0000.npy", "./data/blues/blues.0001.npy", ...],
-        ["./data/country/country.0000.npy", "./data/country/country.0001.npy", ...],
-    ]
-    """
-    labels = []
-    persistent_images = [np.load(path) for path in persistence_image_paths]
-    
-    # dz = {"blues":["blues.00000.npy", "blues.00001.npy"],
-#           "classical":["classical.00000.npy", "classical.00001.npy"],
-#           "country":["country.00000.npy", "country.00001.npy"],
-#           "disco":["disco.00000.npy", "disco.00001.npy"], 
-#           "hiphop": ["hiphop.00000.npy", "hiphop.00001.npy"],
-#           "jazz":["jazz.00000.npy", "jazz.00001.npy"],
-#           "metal":["metal.00000.npy","metal.00001.npy"],
-#           "pop":["pop.00000.npy", "pop.00001.npy"],
-#           "reggae":["reggae.00000.npy", "reggae.00001.npy"],
-#           "rock":["rock.00000.npy", "rock.00001.npy"]}   
-    genres_data_0 = [PI_reduce(np.load(dz[i][0])) for i in dz.keys()]
-    genres_data_1 = [PI_reduce(np.load(dz[i][1])) for i in dz.keys()]
-    #UMAP 2D reduction of 2 tracks for each genre:
-    plt.figure(figsize=(20,10))
-    for i in range(len(genres_data_0)):
-        plt.scatter(
-        genres_data_0[i][:, 0],
-        genres_data_0[i][:, 1],
-        c=[sns.color_palette()[i]])
-    for i in range(len(genres_data_1)):
-        plt.scatter(
-        genres_data_1[i][:, 0],
-        genres_data_1[i][:, 1],
-        c=[sns.color_palette()[i]])
-    plt.legend(dz.keys())
-    plt.gca().set_aspect('equal', 'datalim')
-    plt.title('UMAP projections of persistence images', fontsize=24)
->>>>>>> a81c14d710e31ca40637cc7c95a03795a3408398
+
 
 if __name__=="__main__":
     main()

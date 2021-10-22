@@ -55,6 +55,8 @@ import seaborn as sns
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.svm import SVC
 import umap.umap_ as umap
+import cv2
+import umap.plot
 
 def create_audio_object(data):
     """
@@ -225,48 +227,66 @@ def PI_proj_umap_plot(data, labels, colors):
 
 def main(path_to_data_folder="C:\\Users\\Admin\\Documents\\python"):
     
-    persistence_image_paths = [os.path.join(path_to_data_folder, f) for f in os.listdir(path_to_data_folder) if ".npy" in f]
+    persistence_image_paths = [os.path.join(path_to_data_folder, f) 
+                               for f in os.listdir(path_to_data_folder) 
+                               if ".npy" in f]
+    genres = ["blues.00", "classical.00", "country.00", "disco.00", "hiphop.00", 
+              "jazz.00", "metal.00", "pop.00", "reggae.00", "rock.00"]
+    pers_imgs = [[np.load(path) for path in persistence_image_paths 
+                  if genre in path] for genre in genres]
+    imgs_per_genre = [len(pers_imgs_sublist) for pers_imgs_sublist in pers_imgs]
+    labels = [genre for (genre, im_g) in zip(genres, imgs_per_genre) for _ in range(im_g)]
+    imgs_shapes = np.unique([img.shape for genre_imgs in pers_imgs
+                             for img in genre_imgs])
+    min_h = min(imgs_shapes[:, 0])
+    min_w = min(imgs_shapes[:, 1])
+    min_shape = (min_h, min_w)
+    reshaped_images = [cv2.resize(img, (min_w, min_h)) 
+                       for genre_imgs in pers_imgs
+                       for img in genre_imgs]
+    flattened_images = [img.flatten() for img in reshaped_images]
+    projector = umap.UMAP().fit(flattened_images.data)
+    umap.plot.points(projector, labels=labels)
+    # blues_images = np.array([np.load(path) for path in persistence_image_paths if "\\blues.00" in path])
+    
+    # classical_images = np.array([np.load(path) for path in persistence_image_paths if "\\classical.00" in path])
+    
+    # country_images = np.array([np.load(path) for path in persistence_image_paths if "\\country.00" in path])
+    
+    # disco_images = np.array([np.load(path) for path in persistence_image_paths if "\\disco.00" in path])
+    
+    # hiphop_images = np.array([np.load(path) for path in persistence_image_paths if "\\hiphop.00" in path])
+    
+    # jazz_images = np.array([np.load(path) for path in persistence_image_paths if "\\jazz.00" in path])
+        
+    # metal_images = np.array([np.load(path) for path in persistence_image_paths if "\\metal.00" in path])
+    
+    # pop_images = np.array([np.load(path) for path in persistence_image_paths if "\\pop.00" in path])
+        
+    # reggae_images = np.array([np.load(path) for path in persistence_image_paths if "\\reggae.00" in path])
+        
+    # rock_images = np.array([np.load(path) for path in persistence_image_paths if "\\rock.00" in path])
    
-    blues_images = np.array([np.load(path) for path in persistence_image_paths if "\\blues.00" in path])
-    
-    classical_images = np.array([np.load(path) for path in persistence_image_paths if "\\classical.00" in path])
-    
-    country_images = np.array([np.load(path) for path in persistence_image_paths if "\\country.00" in path])
-    
-    disco_images = np.array([np.load(path) for path in persistence_image_paths if "\\disco.00" in path])
-    
-    hiphop_images = np.array([np.load(path) for path in persistence_image_paths if "\\hiphop.00" in path])
-    
-    jazz_images = np.array([np.load(path) for path in persistence_image_paths if "\\jazz.00" in path])
-        
-    metal_images = np.array([np.load(path) for path in persistence_image_paths if "\\metal.00" in path])
-    
-    pop_images = np.array([np.load(path) for path in persistence_image_paths if "\\pop.00" in path])
-        
-    reggae_images = np.array([np.load(path) for path in persistence_image_paths if "\\reggae.00" in path])
-        
-    rock_images = np.array([np.load(path) for path in persistence_image_paths if "\\rock.00" in path])
-   
-    genres_umap = np.vstack((PI_umap_reduce(blues_images), 
-                             PI_umap_reduce(classical_images), 
-                             PI_umap_reduce(country_images),
-                             PI_umap_reduce(disco_images), 
-                             PI_umap_reduce(hiphop_images),
-                             PI_umap_reduce(jazz_images), 
-                             PI_umap_reduce(metal_images),
-                             PI_umap_reduce(pop_images),
-                             PI_umap_reduce(reggae_images),
-                             PI_umap_reduce(rock_images)
-                             ))
+    # genres_umap = np.vstack((PI_umap_reduce(blues_images), 
+    #                          PI_umap_reduce(classical_images), 
+    #                          PI_umap_reduce(country_images),
+    #                          PI_umap_reduce(disco_images), 
+    #                          PI_umap_reduce(hiphop_images),
+    #                          PI_umap_reduce(jazz_images), 
+    #                          PI_umap_reduce(metal_images),
+    #                          PI_umap_reduce(pop_images),
+    #                          PI_umap_reduce(reggae_images),
+    #                          PI_umap_reduce(rock_images)
+    #                          ))
     
     
-    labels = ["blues"]*100+["classical"]*100+["country"]*100+["disco"]*100+["hiphop"]*100+["jazz"]*99+["metal"]*100+["pop"]*100+["reggae"]*100+["rock"]*100
-    y_train = np.array(labels)
+    # labels = ["blues"]*100+["classical"]*100+["country"]*100+["disco"]*100+["hiphop"]*100+["jazz"]*99+["metal"]*100+["pop"]*100+["reggae"]*100+["rock"]*100
+    # y_train = np.array(labels)
     
-    PI_proj_umap_plot(genres_umap,
-                      y_train,
-                      colors=[0]*100+[1]*100+[2]*100+[3]*100+[4]*100+[5]*99+[6]*100+[7]*100+[8]*100+[9]*100
-                      )
+    # PI_proj_umap_plot(genres_umap,
+    #                   y_train,
+    #                   colors=[0]*100+[1]*100+[2]*100+[3]*100+[4]*100+[5]*99+[6]*100+[7]*100+[8]*100+[9]*100
+    #                   )
 
 
 if __name__=="__main__":

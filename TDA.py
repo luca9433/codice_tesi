@@ -17,6 +17,7 @@ import librosa.display
 import IPython.display as ipd
 
 import persim
+from persim import PersistenceImager, plot_diagrams
 import gudhi
 from ripser import ripser, lower_star_img
 from itertools import product
@@ -246,88 +247,26 @@ def main(path_to_data_folder="C:\\Users\\Admin\\Documents\\python"):
         
     rock_images = np.array([np.load(path) for path in persistence_image_paths if "\\rock.00" in path])
    
-    X_blues_train = np.array([np.ndarray.flatten(p) for p in blues_images], dtype=np.float64)
+    genres_umap = np.vstack((PI_umap_reduce(blues_images), 
+                             PI_umap_reduce(classical_images), 
+                             PI_umap_reduce(country_images),
+                             PI_umap_reduce(disco_images), 
+                             PI_umap_reduce(hiphop_images),
+                             PI_umap_reduce(jazz_images), 
+                             PI_umap_reduce(metal_images),
+                             PI_umap_reduce(pop_images),
+                             PI_umap_reduce(reggae_images),
+                             PI_umap_reduce(rock_images)
+                             ))
     
-    X_classical_train = np.array([np.ndarray.flatten(p) for p in classical_images])
-    
-    X_country_train = np.array([np.ndarray.flatten(p) for p in country_images])
-    
-    X_disco_train = np.array([np.ndarray.flatten(p) for p in disco_images])
-    
-    X_hiphop_train = np.array([np.ndarray.flatten(p) for p in hiphop_images])
-    
-    X_jazz_train = np.array([np.ndarray.flatten(p) for p in jazz_images])
-    
-    X_metal_train = np.array([np.ndarray.flatten(p) for p in metal_images])
-    
-    X_pop_train = np.array([np.ndarray.flatten(p) for p in pop_images])
-    
-    X_reggae_train = np.array([np.ndarray.flatten(p) for p in reggae_images])
-    
-    X_rock_train = np.array([np.ndarray.flatten(p) for p in rock_images])
-    
-    reducer = umap.UMAP(n_components=2, n_neighbors=5, random_state=42, transform_seed=42, verbose=False)
-    
-    reducer.fit(X_blues_train)
-   
-    blues_umap = reducer.transform(X_blues_train)
-        
-    reducer.fit(X_classical_train)
-    
-    classical_umap = reducer.transform(X_classical_train)
-        
-    reducer.fit(X_country_train) 
-    
-    country_umap = reducer.transform(X_country_train)
-        
-    reducer.fit(X_disco_train)
-    
-    disco_umap = reducer.transform(X_disco_train)
-    
-    reducer.fit(X_hiphop_train)
-    
-    hiphop_umap = reducer.transform(X_hiphop_train)
-        
-    reducer.fit(X_jazz_train)
-    
-    jazz_umap = reducer.transform(X_jazz_train)
-        
-    reducer.fit(X_metal_train)
-    
-    metal_umap = reducer.transform(X_metal_train)
-        
-    reducer.fit(X_pop_train)
-    
-    pop_umap = reducer.transform(X_pop_train)
-        
-    reducer.fit(X_reggae_train)
-    
-    reggae_umap = reducer.transform(X_reggae_train)
-        
-    reducer.fit(X_rock_train)
-    
-    rock_umap = reducer.transform(X_rock_train)
-        
-    genres_umap = np.vstack((blues_umap, classical_umap, country_umap, disco_umap, hiphop_umap, jazz_umap, metal_umap, pop_umap, reggae_umap, rock_umap))
     
     labels = ["blues"]*100+["classical"]*100+["country"]*100+["disco"]*100+["hiphop"]*100+["jazz"]*99+["metal"]*100+["pop"]*100+["reggae"]*100+["rock"]*100
-
     y_train = np.array(labels)
     
-    colors=[0]*100+[1]*100+[2]*100+[3]*100+[4]*100+[5]*99+[6]*100+[7]*100+[8]*100+[9]*100
-
-    fig = plt.figure(1, figsize=(10, 10))
-    plt.clf()
-    plt.scatter(
-        genres_umap[:, 0],
-        genres_umap[:, 1],
-        c=colors,
-        cmap=plt.cm.nipy_spectral,
-        edgecolor="k",
-        label=y_train,
-    )
-    plt.colorbar(boundaries=np.arange(11) - 0.5).set_ticks(np.arange(10))
-    plt.savefig("genres_PDs_2Dprojections_umap.svg")
+    PI_proj_umap_plot(genres_umap,
+                      y_train,
+                      colors=[0]*100+[1]*100+[2]*100+[3]*100+[4]*100+[5]*99+[6]*100+[7]*100+[8]*100+[9]*100
+                      )
 
 
 if __name__=="__main__":

@@ -19,7 +19,6 @@ import IPython.display as ipd
 import persim
 from persim import PersistenceImager, plot_diagrams
 import gudhi
-from ripser import ripser, lower_star_img
 from itertools import product
 
 import time
@@ -28,7 +27,6 @@ from sklearn import datasets
 from scipy.stats import multivariate_normal as mvn
 import matplotlib.pyplot as plt
 
-from ripser import Rips
 
 import umap.umap_ as umap
 
@@ -56,7 +54,6 @@ from sklearn.neighbors import KNeighborsClassifier
 from sklearn.svm import SVC
 import umap.umap_ as umap
 import cv2
-import umap.plot
 
 def create_audio_object(data):
     """
@@ -200,31 +197,7 @@ def Persistence_Image(data, plot=False):
         plt.tight_layout()
     return imgs
     
-
-def PI_umap_reduce(imgs): #reduction of persistence images to 2 dimensions
-    X_train = np.array([np.ndarray.flatten(p) for p in imgs])
-    reducer = umap.UMAP(n_components=2, n_neighbors=5, random_state=42, transform_seed=42, verbose=False)
-    reducer.fit(X_train)
-    genres_umap = reducer.transform(X_train)
-    return genres_umap
-
-def PI_proj_umap_plot(data, labels, colors):
-    fig = plt.figure(1, figsize=(10, 10))
-    plt.clf()
-    plt.scatter(
-        data[:, 0],
-        data[:, 1],
-        c=colors,
-        cmap=plt.cm.nipy_spectral,
-        edgecolor="k",
-        label=labels,
-    )
-    plt.colorbar(boundaries=np.arange(11) - 0.5).set_ticks(np.arange(10))
-    plt.savefig("genres_PDs_2Dprojections_umap.svg")
     
-    
-    
-
 def main(path_to_data_folder="C:\\Users\\Admin\\Documents\\python"):
     
     persistence_image_paths = [os.path.join(path_to_data_folder, f) 
@@ -236,62 +209,34 @@ def main(path_to_data_folder="C:\\Users\\Admin\\Documents\\python"):
                   if genre in path] for genre in genres]
     imgs_per_genre = [len(pers_imgs_sublist) for pers_imgs_sublist in pers_imgs]
     labels = [genre for (genre, im_g) in zip(genres, imgs_per_genre) for _ in range(im_g)]
-    imgs_shapes = np.unique([img.shape for genre_imgs in pers_imgs
-                             for img in genre_imgs])
-    min_h = min(imgs_shapes[:, 0])
-    min_w = min(imgs_shapes[:, 1])
+    imgs_shapes = [img.shape for genre_imgs in pers_imgs
+                             for img in genre_imgs]
+    min_h = min([t[0] for t in imgs_shapes])
+    min_w = min([t[1] for t in imgs_shapes])
     min_shape = (min_h, min_w)
     reshaped_images = [cv2.resize(img, (min_w, min_h)) 
                        for genre_imgs in pers_imgs
                        for img in genre_imgs]
-    flattened_images = [img.flatten() for img in reshaped_images]
-    projector = umap.UMAP().fit(flattened_images.data)
-    umap.plot.points(projector, labels=labels)
-    # blues_images = np.array([np.load(path) for path in persistence_image_paths if "\\blues.00" in path])
+    flattened_images = np.array([img.flatten() for img in reshaped_images])
+    reducer = umap.UMAP()
+    reducer.fit(flattened_images.data)
+    projector = reducer.transform(flattened_images.data)
+    color_numbers = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+    colors = [number for (number, im_g) in zip(color_numbers, imgs_per_genre) for _ in range(im_g)]
     
-    # classical_images = np.array([np.load(path) for path in persistence_image_paths if "\\classical.00" in path])
-    
-    # country_images = np.array([np.load(path) for path in persistence_image_paths if "\\country.00" in path])
-    
-    # disco_images = np.array([np.load(path) for path in persistence_image_paths if "\\disco.00" in path])
-    
-    # hiphop_images = np.array([np.load(path) for path in persistence_image_paths if "\\hiphop.00" in path])
-    
-    # jazz_images = np.array([np.load(path) for path in persistence_image_paths if "\\jazz.00" in path])
-        
-    # metal_images = np.array([np.load(path) for path in persistence_image_paths if "\\metal.00" in path])
-    
-    # pop_images = np.array([np.load(path) for path in persistence_image_paths if "\\pop.00" in path])
-        
-    # reggae_images = np.array([np.load(path) for path in persistence_image_paths if "\\reggae.00" in path])
-        
-    # rock_images = np.array([np.load(path) for path in persistence_image_paths if "\\rock.00" in path])
-   
-    # genres_umap = np.vstack((PI_umap_reduce(blues_images), 
-    #                          PI_umap_reduce(classical_images), 
-    #                          PI_umap_reduce(country_images),
-    #                          PI_umap_reduce(disco_images), 
-    #                          PI_umap_reduce(hiphop_images),
-    #                          PI_umap_reduce(jazz_images), 
-    #                          PI_umap_reduce(metal_images),
-    #                          PI_umap_reduce(pop_images),
-    #                          PI_umap_reduce(reggae_images),
-    #                          PI_umap_reduce(rock_images)
-    #                          ))
-    
-    
-    # labels = ["blues"]*100+["classical"]*100+["country"]*100+["disco"]*100+["hiphop"]*100+["jazz"]*99+["metal"]*100+["pop"]*100+["reggae"]*100+["rock"]*100
-    # y_train = np.array(labels)
-    
-    # PI_proj_umap_plot(genres_umap,
-    #                   y_train,
-    #                   colors=[0]*100+[1]*100+[2]*100+[3]*100+[4]*100+[5]*99+[6]*100+[7]*100+[8]*100+[9]*100
-    #                   )
-
+    fig = plt.figure(figsize=(10, 10))
+    plt.gca()
+    plt.scatter(
+    projector[:, 0],
+    projector[:, 1],
+    c=colors,
+    cmap=plt.cm.nipy_spectral,
+    edgecolor="k",
+    label=genres
+    )
 
 if __name__=="__main__":
     main()
-    
     
     
     

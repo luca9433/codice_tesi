@@ -8,6 +8,7 @@ import pandas as pd
 import os
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib.colors as mcolors
 import scipy
 from scipy import ndimage 
 import PIL
@@ -227,16 +228,28 @@ def main(path_to_data_folder="C:\\Users\\Admin\\Documents\\python",
     f, ax = plt.subplots(figsize=(10,10))
         
     for i, genre in enumerate(genres):
-        inds = np.where(labels == genre)[0]
+        inds = np.where(labels == genre)
         colors = [cm.nipy_spectral(norm(i),bytes=False) for _ in inds]
         ax.scatter(projector[inds, 0], projector[inds, 1], 
                    c = colors, label=genre,
                    alpha=.3)
+        
+    colors_list = [plt.cm.nipy_spectral(norm(i),bytes=False) for i in range(10)]
+    colors_rep = [number for (number, im_g) in zip(colors_list, imgs_per_genre) for _ in range(im_g)]
+
+    ax.scatter(
+    projector[:, 0],
+    projector[:, 1],
+    c=colors_rep,
+    cmap=plt.cm.nipy_spectral,
+    edgecolor="k",
+    )
+
     
     plt.legend()    
-    if save_path is not None:
-        f.savefig(os.path.join(save_path, "umap_genres.svg"))
-        f.savefig(os.path.join(save_path, "umap_genres.png"))
+    
+    f.savefig(os.path.join(save_path, "umap_genres.svg"))
+    f.savefig(os.path.join(save_path, "umap_genres.png"))
         
 
 if __name__=="__main__":

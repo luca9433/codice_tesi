@@ -39,7 +39,9 @@ import seaborn as sns
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.svm import SVC
 import h5py
+import matplotlib
 import matplotlib.pyplot as plt
+import matplotlib.cm as cm
 import umap
 import os
 import math
@@ -198,13 +200,14 @@ def Persistence_Image(data, plot=False):
     return imgs
     
     
-def main(path_to_data_folder="C:\\Users\\Admin\\Documents\\python"):
+def main(path_to_data_folder="C:\\Users\\Admin\\Documents\\python",
+         save_path=None):
     
     persistence_image_paths = [os.path.join(path_to_data_folder, f) 
                                for f in os.listdir(path_to_data_folder) 
                                if ".npy" in f]
-    genres = ["blues.00", "classical.00", "country.00", "disco.00", "hiphop.00", 
-              "jazz.00", "metal.00", "pop.00", "reggae.00", "rock.00"]
+    genres = ["blues", "classical", "country", "disco", "hiphop", 
+              "jazz", "metal", "pop", "reggae", "rock"]
     pers_imgs = [[np.load(path) for path in persistence_image_paths 
                   if genre in path] for genre in genres]
     imgs_per_genre = [len(pers_imgs_sublist) for pers_imgs_sublist in pers_imgs]
@@ -213,7 +216,6 @@ def main(path_to_data_folder="C:\\Users\\Admin\\Documents\\python"):
                              for img in genre_imgs]
     min_h = min([t[0] for t in imgs_shapes])
     min_w = min([t[1] for t in imgs_shapes])
-    min_shape = (min_h, min_w)
     reshaped_images = [cv2.resize(img, (min_w, min_h)) 
                        for genre_imgs in pers_imgs
                        for img in genre_imgs]
@@ -221,19 +223,21 @@ def main(path_to_data_folder="C:\\Users\\Admin\\Documents\\python"):
     reducer = umap.UMAP()
     reducer.fit(flattened_images.data)
     projector = reducer.transform(flattened_images.data)
-    color_numbers = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
-    colors = [number for (number, im_g) in zip(color_numbers, imgs_per_genre) for _ in range(im_g)]
+    norm = matplotlib.colors.Normalize(vmin=0, vmax=len(genres))
+    f, ax = plt.subplots(figsize=(10,10))
+        
+    for i, genre in enumerate(genres):
+        inds = np.where(labels == genre)[0]
+        colors = [cm.nipy_spectral(norm(i),bytes=False) for _ in inds]
+        ax.scatter(projector[inds, 0], projector[inds, 1], 
+                   c = colors, label=genre,
+                   alpha=.3)
     
-    fig = plt.figure(figsize=(10, 10))
-    plt.gca()
-    plt.scatter(
-    projector[:, 0],
-    projector[:, 1],
-    c=colors,
-    cmap=plt.cm.nipy_spectral,
-    edgecolor="k",
-    label=genres
-    )
+    plt.legend()    
+    if save_path is not None:
+        f.savefig(os.path.join(save_path, "umap_genres.svg"))
+        f.savefig(os.path.join(save_path, "umap_genres.png"))
+        
 
 if __name__=="__main__":
     main()

@@ -202,7 +202,7 @@ def Persistence_Image(data, plot=False):
     
     
 def main(path_to_data_folder="C:\\Users\\Admin\\Documents\\python",
-         save_path=None):
+         save_path="C:\\Users\\Admin\\Documents\\python"):
     
     persistence_image_paths = [os.path.join(path_to_data_folder, f) 
                                for f in os.listdir(path_to_data_folder) 
@@ -226,17 +226,19 @@ def main(path_to_data_folder="C:\\Users\\Admin\\Documents\\python",
     projector = reducer.transform(flattened_images.data)
     norm = matplotlib.colors.Normalize(vmin=0, vmax=len(genres))
     f, ax = plt.subplots(figsize=(10,10))
-        
+
     for i, genre in enumerate(genres):
         inds = np.where(np.asarray(labels) == genre)[0]
-        colors = [cm.nipy_spectral(norm(i),bytes=False) for _ in inds]
+        colors = [sns.color_palette("colorblind")[i] for _ in inds]
         ax.scatter(projector[inds, 0], 
                    projector[inds, 1], 
                    c = colors, 
                    label=genre,
                    alpha=.3)
-
-    plt.legend()    
+        
+    leg = plt.legend()
+    for lh in leg.legendHandles: 
+        lh.set_alpha(1)    
     if save_path is not None:
         f.savefig(os.path.join(save_path, "umap_genres.svg"))
         f.savefig(os.path.join(save_path, "umap_genres.png"))

@@ -210,7 +210,7 @@ def main(path_to_data_folder="C:\\Users\\Admin\\Documents\\python",
     genres = ["blues", "classical", "country", "disco", "hiphop", 
               "jazz", "metal", "pop", "reggae", "rock"]
     pers_imgs = [[np.load(path) for path in persistence_image_paths 
-                  if genre in path] for genre in genres]
+                  if genre in path and os.path.isfile(path)] for genre in genres]
     imgs_per_genre = [len(pers_imgs_sublist) for pers_imgs_sublist in pers_imgs]
     labels = [genre for (genre, im_g) in zip(genres, imgs_per_genre) for _ in range(im_g)]
     imgs_shapes = [img.shape for genre_imgs in pers_imgs
@@ -228,28 +228,18 @@ def main(path_to_data_folder="C:\\Users\\Admin\\Documents\\python",
     f, ax = plt.subplots(figsize=(10,10))
         
     for i, genre in enumerate(genres):
-        inds = np.where(labels == genre)
+        inds = np.where(np.asarray(labels) == genre)[0]
         colors = [cm.nipy_spectral(norm(i),bytes=False) for _ in inds]
-        ax.scatter(projector[inds, 0], projector[inds, 1], 
-                   c = colors, label=genre,
+        ax.scatter(projector[inds, 0], 
+                   projector[inds, 1], 
+                   c = colors, 
+                   label=genre,
                    alpha=.3)
-        
-    colors_list = [plt.cm.nipy_spectral(norm(i),bytes=False) for i in range(10)]
-    colors_rep = [number for (number, im_g) in zip(colors_list, imgs_per_genre) for _ in range(im_g)]
 
-    ax.scatter(
-    projector[:, 0],
-    projector[:, 1],
-    c=colors_rep,
-    cmap=plt.cm.nipy_spectral,
-    edgecolor="k",
-    )
-
-    
     plt.legend()    
-    
-    f.savefig(os.path.join(save_path, "umap_genres.svg"))
-    f.savefig(os.path.join(save_path, "umap_genres.png"))
+    if save_path is not None:
+        f.savefig(os.path.join(save_path, "umap_genres.svg"))
+        f.savefig(os.path.join(save_path, "umap_genres.png"))
         
 
 if __name__=="__main__":

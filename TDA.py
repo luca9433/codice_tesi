@@ -29,7 +29,6 @@ from scipy.stats import multivariate_normal as mvn
 import matplotlib.pyplot as plt
 
 
-import umap.umap_ as umap
 
 from pylab import  show
 
@@ -43,7 +42,7 @@ import h5py
 import matplotlib
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
-import umap
+import umap.umap_ as umap
 import os
 import math
 import requests
@@ -55,7 +54,6 @@ from sklearn.preprocessing import StandardScaler
 import seaborn as sns
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.svm import SVC
-import umap.umap_ as umap
 import cv2
 
 def create_audio_object(data):
@@ -202,7 +200,7 @@ def Persistence_Image(data, plot=False):
     
     
 def main(path_to_data_folder="C:\\Users\\Admin\\Documents\\python",
-         save_path=None):
+         save_path="C:\\Users\\Admin\\Documents\\python"):
     
     persistence_image_paths = [os.path.join(path_to_data_folder, f) 
                                for f in os.listdir(path_to_data_folder) 
@@ -222,9 +220,8 @@ def main(path_to_data_folder="C:\\Users\\Admin\\Documents\\python",
                        for img in genre_imgs]
     flattened_images = np.array([img.flatten() for img in reshaped_images])
     reducer = umap.UMAP()
-    reducer.fit(flattened_images.data)
-    projector = reducer.transform(flattened_images.data)
-    norm = matplotlib.colors.Normalize(vmin=0, vmax=len(genres))
+    reducer.fit(flattened_images)
+    projector = reducer.transform(flattened_images)
     f, ax = plt.subplots(figsize=(10,10))
 
     for i, genre in enumerate(genres):

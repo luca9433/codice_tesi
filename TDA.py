@@ -200,7 +200,7 @@ def Persistence_Image(data, plot=False):
     
     
 def main(path_to_data_folder="C:\\Users\\Admin\\Documents\\python",
-         save_path="C:\\Users\\Admin\\Documents\\python"):
+         save_path=None):
     
     persistence_image_paths = [os.path.join(path_to_data_folder, f) 
                                for f in os.listdir(path_to_data_folder) 

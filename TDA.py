@@ -111,6 +111,7 @@ def save_mfccs(path_to_genres_folder="C:\\Users\\Admin\\Documents\\python\\Data\
 def cross_validation(pipeline, X, y, n_folds=5, random_state=42):
     skf = StratifiedKFold(n_splits=n_folds, random_state=random_state, shuffle=True) # TODO: check doc for shuffle
     cms, accs = [], []
+    cms_train, accs_train = [], []
     
     for train_index, test_index in skf.split(X, y):
         X_train, X_test = X[train_index], X[test_index]
@@ -120,10 +121,22 @@ def cross_validation(pipeline, X, y, n_folds=5, random_state=42):
         y_pred = clf.predict(X_test)
         cms.append(confusion_matrix(y_test, y_pred)) # TODO: verify the func returns a matrix (np.ndarray)
         accs.append(accuracy_score(y_test, y_pred)) # TODO: verify that the func returns an accuracy score (float)
-    
-    return cms, accs
+        y_pred_train = clf.predict(X_train)
+        cms_train.append(confusion_matrix(y_train, y_pred_train))
+        accs_train.append(accuracy_score(y_train, y_pred_train))
+        
+    return cms, accs, cms_train, accs_train
 
-    
+
+def plot_accuracy(accs_test, accs_train, ax = None):
+    if ax is None:
+        f, ax = plt.subplots()
+        
+    assert isinstance(accs_test, list) and isinstance(accs_train, list), "Please, provide lists as input instead of {}".format(type(acc_test))
+    df = pd.DataFrame({"acc": accs_test + accs_train, "is_test": [True for _ in accs_test] + [False for _ in accs_train]})
+    sns.barplot(x="is_test", y="acc", data=df, ax=ax)
+    return df
+   
                 
 def method_accuracy(method, data, labels):
     skf = StratifiedKFold(n_splits=3)

@@ -18,6 +18,7 @@ import librosa.display
 import IPython.display as ipd
 
 import persim
+from ripser import ripser, lower_star_img
 from persim import PersistenceImager, plot_diagrams
 import gudhi
 from itertools import product
@@ -56,6 +57,14 @@ from sklearn.neighbors import KNeighborsClassifier
 from sklearn.svm import SVC
 import cv2
 
+from sklearn.pipeline import make_pipeline
+from sklearn.svm import SVC
+from sklearn.model_selection import StratifiedKFold
+
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import confusion_matrix
+from sklearn.metrics import accuracy_score
+
 def create_audio_object(data):
     """
     
@@ -89,6 +98,57 @@ def extract_mfccs(data):
     signal, sr = librosa.load(data)
     mfccs = librosa.feature.mfcc(signal, sr=sr, n_mfcc=128)
     return(mfccs)
+
+def save_mfccs(path_to_genres_folder="C:\\Users\\Admin\\Documents\\python\\Data\\genres_original"):
+    genre_paths = [os.path.join(path_to_genres_folder, f) 
+                               for f in os.listdir(path_to_genres_folder)
+                                if ".idea" not in f]
+    for genre_path in genre_paths:
+        for i in range(len(os.listdir(genre_path))):
+                   np.save(os.path.splitext(os.listdir(genre_path)[i])[0],
+                           extract_mfccs(os.path.join(genre_path,os.listdir(genre_path)[i])))
+
+def method_accuracy(method, data, labels):
+    skf = StratifiedKFold(n_splits=3)
+    scores = cross_val_score(method, 
+                             data, 
+                             labels, 
+                             scoring='accuracy', 
+                             cv=skf, 
+                             n_jobs=-1
+                             )
+    return scores
+               
+def mfccs_classification(path_to_mfccs_folder='C:\\Users\\Admin\\Documents\\python'):
+    mfccs_paths=[os.path.join(path_to_mfccs_folder, f) 
+                               for f in os.listdir(path_to_mfccs_folder) 
+                               if ".npy" in f]
+    genres = ["blues", "classical", "country", "disco", "hiphop", 
+              "jazz", "metal", "pop", "reggae", "rock"]
+    mfccs = [[np.load(path) for path in mfccs_paths 
+                  if genre in path and os.path.isfile(path)] for genre in genres]
+    mfccs_per_genre = [len(mfccs_sublist) for mfccs_sublist in mfccs]
+    labels = [genre for (genre, im_g) in zip(genres, mfccs_per_genre) for _ in range(im_g)]
+    mfccs_shapes = [mfcc.shape for genre_mfccs in mfccs
+                             for mfcc in genre_mfccs]
+    min_h = min([t[0] for t in mfccs_shapes])
+    min_w = min([t[1] for t in mfccs_shapes])
+    reshaped_mfccs = [cv2.resize(mfcc, (min_w, min_h)) 
+                       for genre_mfccs in mfccs
+                       for mfcc in genre_mfccs]
+    flattened_mfccs = np.array([mfcc.flatten() for mfcc in reshaped_mfccs])
+    X_train, X_test, y_train, y_test = train_test_split(flattened_mfccs, 
+                                                    labels, 
+                                                    test_size=0.30, 
+                                                    random_state=42)
+    
+    clf = make_pipeline(SVC(gamma='auto', kernel='rbf'))
+    clf.fit(X_train, y_train)
+    y_pred=clf.predict(X_test)
+    confusion_matrix(y_test, y_pred)
+    accuracy_score(y_test, y_pred)
+    method_accuracy(clf, flattened_mfccs, labels)
+    
 
 def visualise(data):
     plt.figure(figsize=(10,5))
@@ -145,6 +205,26 @@ def make_life_finite(data):
     return finite_cps
 
 
+class Audio:
+    def __init__(self,path):
+        self.path = path
+            
+    def get_diagram(self):
+        dgm=lower_star_img(extract_mfccs(self.path))
+        return make_life_finite(dgm)  
+
+def save_PDs(path_to_genres_folder="C:\\Users\\Admin\\Documents\\python\\Data\\genres_original"):
+    genre_paths = [os.path.join(path_to_genres_folder, f) 
+                               for f in os.listdir(path_to_genres_folder)
+                                if ".idea" not in f]
+    for genre_path in genre_paths:
+        for i in range(len(os.listdir(genre_path))):
+            np.save("PD_"+os.path.splitext(os.listdir(genre_path)[i])[0],
+                    Audio(os.path.join(genre_path,os.listdir(genre_path)[i])).get_diagram())
+            
+
+
+
 def p_bottleneck(data_0,data_1): #Bottleneck distance con persim
     """
     Calculate the Bottleneck distance between the 0-persistence diagrams
@@ -170,33 +250,25 @@ def g_bottleneck_approx(dgm_0,dgm_1): #Bottleneck distance con gudhi
 
 def g_bottleneck(dgm_0,dgm_1):
     return gudhi.bottleneck_distance(dgm_0,dgm_1)
-
-def get_file_paths(dirname):
-    file_paths = []  
-    for root, directories, files in os.walk(dirname):
-        for filename in files:
-            filepath = os.path.join(root, filename)
-            file_paths.append(filepath)  
-    return file_paths
-
-class Audio:
-    def __init__(self,path):
-        self.path = path
-            
-    def get_diagram(self):
-        dgm=lower_star_img(extract_mfccs(self.path))
-        return make_life_finite(dgm)
     
-def Persistence_Image(data, plot=False):
+def save_PIs(path_to_PDs_folder='C:\\Users\\Admin\\Documents\\python'):
+    PD_genre_paths = [os.path.join(path_to_PDs_folder, f)
+                               for f in os.listdir(path_to_PDs_folder) 
+                               if "PD" in f]
+    diagrams=[]
+    for PD_genre_path in PD_genre_paths:
+        for i in range(len(os.listdir(PD_genre_path))):
+            diagrams.append(np.load(os.path.join(PD_genre_path,os.listdir(PD_genre_path)[i])))
+    
     pimgr = PersistenceImager(pixel_size=1)
-    pimgr.fit(data) 
-    imgs = pimgr.transform(data)
-    if plot:
-        fig, axs = plt.subplots(1, 1, figsize=(10,5)) #da rivedere parte dentro l'if
-        axs.set_title("Persistence Image")
-        pimgr.plot_image(imgs, ax=axs)
-        plt.tight_layout()
-    return imgs
+    pimgr.fit(diagrams)
+    
+    j=0
+    for PD_genre_path in PD_genre_paths:
+        for i in range(len(os.listdir(PD_genre_path))):
+                   np.save(os.path.splitext(os.listdir(PD_genre_path)[i])[0].replace("PD","PI"),
+                           pimgr.transform(diagrams[j]))
+                   j+=1
     
     
 def main(path_to_data_folder="C:\\Users\\Admin\\Documents\\python",
@@ -209,6 +281,7 @@ def main(path_to_data_folder="C:\\Users\\Admin\\Documents\\python",
               "jazz", "metal", "pop", "reggae", "rock"]
     pers_imgs = [[np.load(path) for path in persistence_image_paths 
                   if genre in path and os.path.isfile(path)] for genre in genres]
+    
     imgs_per_genre = [len(pers_imgs_sublist) for pers_imgs_sublist in pers_imgs]
     labels = [genre for (genre, im_g) in zip(genres, imgs_per_genre) for _ in range(im_g)]
     imgs_shapes = [img.shape for genre_imgs in pers_imgs
@@ -240,6 +313,17 @@ def main(path_to_data_folder="C:\\Users\\Admin\\Documents\\python",
         f.savefig(os.path.join(save_path, "umap_genres.svg"))
         f.savefig(os.path.join(save_path, "umap_genres.png"))
         
+    X_train, X_test, y_train, y_test = train_test_split(flattened_images, 
+                                                    labels, 
+                                                    test_size=0.30, 
+                                                    random_state=42)
+    
+    clf = make_pipeline(SVC(gamma='auto', kernel='rbf'))
+    clf.fit(X_train, y_train)
+    y_pred=clf.predict(X_test)
+    confusion_matrix(y_test, y_pred)
+    accuracy_score(y_test, y_pred)
+    method_accuracy(clf, flattened_images, labels) 
 
 if __name__=="__main__":
     main()

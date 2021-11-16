@@ -108,6 +108,23 @@ def save_mfccs(path_to_genres_folder="C:\\Users\\Admin\\Documents\\python\\Data\
                    np.save(os.path.splitext(os.listdir(genre_path)[i])[0],
                            extract_mfccs(os.path.join(genre_path,os.listdir(genre_path)[i])))
 
+def cross_validation(pipeline, X, y, n_folds=5, random_state=42):
+    skf = StratifiedKFold(n_splits=n_folds, random_state=random_state, shuffle=True) # TODO: check doc for shuffle
+    cms, accs = [], []
+    
+    for train_index, test_index in skf.split(X, y):
+        X_train, X_test = X[train_index], X[test_index]
+        y_train, y_test = y[train_index], y[test_index]
+        clf = make_pipeline(pipeline)
+        clf.fit(X_train, y_train)
+        y_pred = clf.predict(X_test)
+        cms.append(confusion_matrix(y_test, y_pred)) # TODO: verify the func returns a matrix (np.ndarray)
+        accs.append(accuracy_score(y_test, y_pred)) # TODO: verify that the func returns an accuracy score (float)
+    
+    return cms, accs
+
+    
+                
 def method_accuracy(method, data, labels):
     skf = StratifiedKFold(n_splits=3)
     scores = cross_val_score(method, 

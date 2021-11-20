@@ -108,8 +108,8 @@ def save_mfccs(path_to_genres_folder="C:\\Users\\Admin\\Documents\\python\\Data\
                    np.save(os.path.splitext(os.listdir(genre_path)[i])[0],
                            extract_mfccs(os.path.join(genre_path,os.listdir(genre_path)[i])))
 
-def cross_validation(pipeline, X, y, n_folds=5, random_state=42):
-    skf = StratifiedKFold(n_splits=n_folds, random_state=random_state, shuffle=True) # TODO: check doc for shuffle
+def cross_validation(pipeline, X, y, n_folds=5, random_state=None):
+    skf = StratifiedKFold(n_splits=n_folds, random_state=random_state, shuffle=False) # TODO: check doc for shuffle
     cms, accs = [], []
     cms_train, accs_train = [], []
     
@@ -148,38 +148,8 @@ def method_accuracy(method, data, labels):
                              n_jobs=-1
                              )
     return scores
-               
-def mfccs_classification(path_to_mfccs_folder='C:\\Users\\Admin\\Documents\\python'):
-    mfccs_paths=[os.path.join(path_to_mfccs_folder, f) 
-                               for f in os.listdir(path_to_mfccs_folder) 
-                               if ".npy" in f]
-    genres = ["blues", "classical", "country", "disco", "hiphop", 
-              "jazz", "metal", "pop", "reggae", "rock"]
-    mfccs = [[np.load(path) for path in mfccs_paths 
-                  if genre in path and os.path.isfile(path)] for genre in genres]
-    mfccs_per_genre = [len(mfccs_sublist) for mfccs_sublist in mfccs]
-    labels = [genre for (genre, im_g) in zip(genres, mfccs_per_genre) for _ in range(im_g)]
-    mfccs_shapes = [mfcc.shape for genre_mfccs in mfccs
-                             for mfcc in genre_mfccs]
-    min_h = min([t[0] for t in mfccs_shapes])
-    min_w = min([t[1] for t in mfccs_shapes])
-    reshaped_mfccs = [cv2.resize(mfcc, (min_w, min_h)) 
-                       for genre_mfccs in mfccs
-                       for mfcc in genre_mfccs]
-    flattened_mfccs = np.array([mfcc.flatten() for mfcc in reshaped_mfccs])
-    X_train, X_test, y_train, y_test = train_test_split(flattened_mfccs, 
-                                                    labels, 
-                                                    test_size=0.30, 
-                                                    random_state=42)
     
-    clf = make_pipeline(SVC(gamma='auto', kernel='rbf'))
-    clf.fit(X_train, y_train)
-    y_pred=clf.predict(X_test)
-    confusion_matrix(y_test, y_pred)
-    accuracy_score(y_test, y_pred)
-    method_accuracy(clf, flattened_mfccs, labels)
     
-
 def visualise(data):
     plt.figure(figsize=(10,5))
     librosa.display.specshow(data,x_axis="time")
@@ -304,14 +274,38 @@ def save_PIs(path_to_PDs_folder='C:\\Users\\Admin\\Documents\\python'):
 def main(path_to_data_folder="C:\\Users\\Admin\\Documents\\python",
          save_path=None):
     
+    mfccs_paths=[os.path.join(path_to_data_folder, f) 
+                               for f in os.listdir(path_to_data_folder) 
+                               if ".npy" in f and "PI" not in f]
+    genres = ["blues", "classical", "country", "disco", "hiphop", 
+              "jazz", "metal", "pop", "reggae", "rock"]
+    mfccs = [[np.load(path) for path in mfccs_paths 
+                  if genre in path and os.path.isfile(path)] for genre in genres]
+    mfccs_per_genre = [len(mfccs_sublist) for mfccs_sublist in mfccs]
+    labels = [genre for (genre, im_g) in zip(genres, mfccs_per_genre) for _ in range(im_g)]
+    mfccs_shapes = [mfcc.shape for genre_mfccs in mfccs
+                             for mfcc in genre_mfccs]
+    min_h = min([t[0] for t in mfccs_shapes])
+    min_w = min([t[1] for t in mfccs_shapes])
+    reshaped_mfccs = [cv2.resize(mfcc, (min_w, min_h)) 
+                       for genre_mfccs in mfccs
+                       for mfcc in genre_mfccs]
+    flattened_mfccs = np.array([mfcc.flatten() for mfcc in reshaped_mfccs])
+    
+    classes=np.asarray(labels)
+    
+    cross_validation(SVC(gamma='auto', kernel='rbf'), 
+                     flattened_mfccs, 
+                     classes, 
+                     random_state=None) #mfccs' classification accuracy
+    
     persistence_image_paths = [os.path.join(path_to_data_folder, f) 
                                for f in os.listdir(path_to_data_folder) 
-                               if ".npy" in f]
+                               if ".npy" in f and "PI" in f]
     genres = ["blues", "classical", "country", "disco", "hiphop", 
               "jazz", "metal", "pop", "reggae", "rock"]
     pers_imgs = [[np.load(path) for path in persistence_image_paths 
                   if genre in path and os.path.isfile(path)] for genre in genres]
-    
     imgs_per_genre = [len(pers_imgs_sublist) for pers_imgs_sublist in pers_imgs]
     labels = [genre for (genre, im_g) in zip(genres, imgs_per_genre) for _ in range(im_g)]
     imgs_shapes = [img.shape for genre_imgs in pers_imgs
@@ -343,17 +337,13 @@ def main(path_to_data_folder="C:\\Users\\Admin\\Documents\\python",
         f.savefig(os.path.join(save_path, "umap_genres.svg"))
         f.savefig(os.path.join(save_path, "umap_genres.png"))
         
-    X_train, X_test, y_train, y_test = train_test_split(flattened_images, 
-                                                    labels, 
-                                                    test_size=0.30, 
-                                                    random_state=42)
+    cross_validation(SVC(gamma='auto', kernel='rbf'), 
+                     flattened_images, 
+                     classes, 
+                     random_state=None) #PIs classification accuracy
+        
     
-    clf = make_pipeline(SVC(gamma='auto', kernel='rbf'))
-    clf.fit(X_train, y_train)
-    y_pred=clf.predict(X_test)
-    confusion_matrix(y_test, y_pred)
-    accuracy_score(y_test, y_pred)
-    method_accuracy(clf, flattened_images, labels) 
+    
 
 if __name__=="__main__":
     main()

@@ -133,7 +133,7 @@ def plot_accuracy(accs_test, accs_train, ax = None, save_plot=None, plot_name=No
         f, ax = plt.subplots()
         
     assert isinstance(accs_test, list) and isinstance(accs_train, list), "Please, provide lists as input instead of {}".format(type(accs_test))
-    df = pd.DataFrame({"acc": accs_test + accs_train, "is_test": [True for _ in accs_test] + [False for _ in accs_train]})
+    df = pd.DataFrame({"acc": accs_test + accs_train, "is_test": ["test" for _ in accs_test] + ["train" for _ in accs_train]})
     sns.barplot(x="is_test", y="acc", data=df, ax=ax)
     if save_plot is not None and plot_name is not None:
         f.savefig(os.path.join(save_plot, plot_name+"accuracy_barplot.svg"))

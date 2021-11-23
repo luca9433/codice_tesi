@@ -128,13 +128,16 @@ def cross_validation(pipeline, X, y, n_folds=5, random_state=None):
     return cms, accs, cms_train, accs_train
 
 
-def plot_accuracy(accs_test, accs_train, ax = None):
+def plot_accuracy(accs_test, accs_train, ax = None, save_plot=None, plot_name=None):
     if ax is None:
         f, ax = plt.subplots()
         
-    assert isinstance(accs_test, list) and isinstance(accs_train, list), "Please, provide lists as input instead of {}".format(type(acc_test))
+    assert isinstance(accs_test, list) and isinstance(accs_train, list), "Please, provide lists as input instead of {}".format(type(accs_test))
     df = pd.DataFrame({"acc": accs_test + accs_train, "is_test": [True for _ in accs_test] + [False for _ in accs_train]})
     sns.barplot(x="is_test", y="acc", data=df, ax=ax)
+    if save_plot is not None and plot_name is not None:
+        f.savefig(os.path.join(save_plot, plot_name+"accuracy_barplot.svg"))
+        f.savefig(os.path.join(save_plot, plot_name+"accuracy_barplot.png"))
     return df
    
                 
@@ -272,7 +275,7 @@ def save_PIs(path_to_PDs_folder='C:\\Users\\Admin\\Documents\\python'):
     
     
 def main(path_to_data_folder="C:\\Users\\Admin\\Documents\\python",
-         save_path=None):
+         save_path="C:\\Users\\Admin\\Documents\\python"):
     
     mfccs_paths=[os.path.join(path_to_data_folder, f) 
                                for f in os.listdir(path_to_data_folder) 
@@ -294,10 +297,15 @@ def main(path_to_data_folder="C:\\Users\\Admin\\Documents\\python",
     
     classes=np.asarray(labels)
     
-    cross_validation(SVC(gamma='auto', kernel='rbf'), 
-                     flattened_mfccs, 
-                     classes, 
-                     random_state=None) #mfccs' classification accuracy
+    cms_test_mfccs, accs_test_mfccs, cms_train_mfccs, accs_train_mfccs = cross_validation(SVC(gamma='auto', kernel='rbf'), 
+                                                                                          flattened_mfccs, 
+                                                                                          classes, 
+                                                                                          random_state=None) #mfccs' classification accuracy
+    plot_accuracy(accs_test_mfccs, 
+                  accs_train_mfccs, 
+                  save_plot="C:\\Users\\Admin\\Documents\\python", 
+                  plot_name="mfccs_")
+    
     
     persistence_image_paths = [os.path.join(path_to_data_folder, f) 
                                for f in os.listdir(path_to_data_folder) 
@@ -337,10 +345,16 @@ def main(path_to_data_folder="C:\\Users\\Admin\\Documents\\python",
         f.savefig(os.path.join(save_path, "umap_genres.svg"))
         f.savefig(os.path.join(save_path, "umap_genres.png"))
         
-    cross_validation(SVC(gamma='auto', kernel='rbf'), 
-                     flattened_images, 
-                     classes, 
-                     random_state=None) #PIs classification accuracy
+        
+    cms_test_PIs, accs_test_PIs, cms_train_PIs, accs_train_PIs = cross_validation(SVC(gamma='auto', kernel='rbf'), 
+                                                                                  flattened_images, 
+                                                                                  classes, 
+                                                                                  random_state=None) #PIs classification accuracy 
+                                                                             
+    plot_accuracy(accs_test_PIs, 
+                  accs_train_PIs, 
+                  save_plot="C:\\Users\\Admin\\Documents\\python", 
+                  plot_name="PIs_")
         
     
     

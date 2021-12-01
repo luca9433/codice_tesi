@@ -139,18 +139,6 @@ def plot_accuracy(accs_test, accs_train, ax = None, save_plot=None, plot_name=No
         f.savefig(os.path.join(save_plot, plot_name+"accuracy_barplot.svg"))
         f.savefig(os.path.join(save_plot, plot_name+"accuracy_barplot.png"))
     return df
-   
-                
-def method_accuracy(method, data, labels):
-    skf = StratifiedKFold(n_splits=3)
-    scores = cross_val_score(method, 
-                             data, 
-                             labels, 
-                             scoring='accuracy', 
-                             cv=skf, 
-                             n_jobs=-1
-                             )
-    return scores
     
     
 def visualise(data):
@@ -159,35 +147,6 @@ def visualise(data):
     plt.colorbar(format="%+2f")
     plt.savefig('testplot.jpg')
     plt.show()
-    
-def lower_star_filtration(img, plot=False):
-    """
-    construct a lowerstar filtration (sublevelset filtration) 
-    on an image and calculate corresponding 0-persistence
-    diagram (H_0)
-
-    Parameters
-    ----------
-    data : ndarray.
-
-    Returns
-    -------
-    ndarray.
-
-    """
-    dgm = lower_star_img(img)
-    if plot:
-        plt.figure(figsize=(10, 5))
-        plt.subplot(121)
-        plt.imshow(img)
-        plt.colorbar()
-        plt.title("Test Image")
-        plt.subplot(122)
-        plot_diagrams(dgm)
-        plt.title("0-D Persistence Diagram")
-        plt.tight_layout()
-        plt.show()
-    return dgm
 
 def make_life_finite(data):
     """
@@ -228,7 +187,7 @@ def save_PDs(path_to_genres_folder="C:\\Users\\Admin\\Documents\\python\\Data\\g
 
 
 
-def p_bottleneck(data_0,data_1): #Bottleneck distance con persim
+def p_bottleneck(data_0,data_1): #Persim package's Bottleneck distance 
     """
     Calculate the Bottleneck distance between the 0-persistence diagrams
     corrisponding to data_0 and data_1 respectively 

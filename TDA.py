@@ -101,8 +101,8 @@ def extract_mfccs(data):#extracts 128 mfccs from an audio wav file
     return(mfccs)
 
 def save_mfccs(path_to_genres_folder="C:\\Users\\Admin\\Documents\\python\\Data\\genres_original",
-               saving_path="C:\\Users\\Admin\\Documents\\python"):#saves mfccs extracted from audio tracks of the GTZAN dataset in the directory "C:\\Users\\Admin\\Documents\\python"
-    genre_paths = [os.path.join(path_to_genres_folder, f) 
+               saving_path="C:\\Users\\Admin\\Documents\\python"):#saves mfccs extracted from audio tracks of the GTZAN dataset in the directory 
+    genre_paths = [os.path.join(path_to_genres_folder, f)           #"C:\\Users\\Admin\\Documents\\python"
                                for f in os.listdir(path_to_genres_folder)
                                if ".idea" not in f]
     for genre_path in genre_paths:
@@ -152,19 +152,8 @@ def visualise(data): #can be used to visualise MFCCs
     plt.show()
 
 def make_life_finite(data):#can be used to replace cornerlines or cornerpoints in a persistence diagram with too high death-coordinates
-                           #with other cornerpoints with the same birth_coordinates and death-coordinates equal to maximum finite death_coordinate, which is not a nan, plus 1 of cornerpoints in the diagram 
-    """                    
-    
-
-    Parameters
-    ----------
-    data : ndarray.
-
-    Returns
-    -------
-    list.
-
-    """
+                           #with other cornerpoints with the same birth_coordinates and death-coordinates equal to maximum finite death_coordinate,
+                           #which is not a nan, plus 1, of cornerpoints in the diagram 
     cps = data.tolist()
     max_finite_life=np.nanmax([c[1] for c in cps if c[1]!=np.inf])
     finite_cps=[c if c[1]<=max_finite_life else [c[0],max_finite_life+1] for c in cps]
@@ -180,8 +169,8 @@ class Audio:
         return make_life_finite(dgm)  
 
 def save_PDs(path_to_genres_folder="C:\\Users\\Admin\\Documents\\python\\Data\\genres_original",
-             saving_path="C:\\Users\\Admin\\Documents\\python"): #saves PDs corresponding to the audio tracks from the GTZAN dataset in subdirectories of the "python" directory, one for each genre
-    genre_paths = [os.path.join(path_to_genres_folder, f) 
+             saving_path="C:\\Users\\Admin\\Documents\\python"): #saves PDs corresponding to the audio tracks from the GTZAN dataset in subdirectories of the "python" 
+    genre_paths = [os.path.join(path_to_genres_folder, f)           #directory, one for each genre
                                for f in os.listdir(path_to_genres_folder)
                                 if ".idea" not in f]
     for genre_path in genre_paths:
@@ -212,8 +201,8 @@ def save_PIs(path_to_PDs_folder='C:\\Users\\Admin\\Documents\\python'):#saves PI
                            pimgr.transform(diagrams[j]))
                    j+=1
                    
-def umap_proj_plot(data,classes,labels,save_path=None):#creates a 2D UMAP projection of a dataset containing multidimensional vectors, for example PIs, divided into a certain number of classes
-    reducer = umap.UMAP()
+def umap_proj_plot(data,classes,labels,save_path=None):#creates a 2D UMAP projection of a dataset containing multidimensional vectors, for example PIs, divided into a certain 
+    reducer = umap.UMAP()                              #number of classes
     reducer.fit(data)
     projector = reducer.transform(data)
     f, ax = plt.subplots(figsize=(10,10))

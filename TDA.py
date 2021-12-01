@@ -45,6 +45,7 @@ import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 import umap.umap_ as umap
 import os
+from pathlib import Path
 import math
 import requests
 
@@ -94,22 +95,24 @@ def create_audio_object(data):
     
 
     
-def extract_mfccs(data):
+def extract_mfccs(data):#extracts 128 mfccs from an audio wav file 
     signal, sr = librosa.load(data)
     mfccs = librosa.feature.mfcc(signal, sr=sr, n_mfcc=128)
     return(mfccs)
 
-def save_mfccs(path_to_genres_folder="C:\\Users\\Admin\\Documents\\python\\Data\\genres_original"):
+def save_mfccs(path_to_genres_folder="C:\\Users\\Admin\\Documents\\python\\Data\\genres_original",
+               saving_path="C:\\Users\\Admin\\Documents\\python"):#saves mfccs extracted from audio tracks of the GTZAN dataset in the directory "C:\\Users\\Admin\\Documents\\python"
     genre_paths = [os.path.join(path_to_genres_folder, f) 
                                for f in os.listdir(path_to_genres_folder)
-                                if ".idea" not in f]
+                               if ".idea" not in f]
     for genre_path in genre_paths:
         for i in range(len(os.listdir(genre_path))):
-                   np.save(os.path.splitext(os.listdir(genre_path)[i])[0],
-                           extract_mfccs(os.path.join(genre_path,os.listdir(genre_path)[i])))
+                np.save(os.path.join(saving_path,os.path.splitext(os.listdir(genre_path)[i])[0]),
+                        extract_mfccs(os.path.join(genre_path,os.listdir(genre_path)[i])))
 
-def cross_validation(pipeline, X, y, n_folds=5, random_state=None):
-    skf = StratifiedKFold(n_splits=n_folds, random_state=random_state, shuffle=False) # TODO: check doc for shuffle
+def cross_validation(pipeline, X, y, n_folds=5, random_state=None):#performs a cross-validation of a ML pipeline, splitting the dataset with StaratifiedKFold, 
+                                                                     #returning accuracy scores in train and test and confusion matrices
+    skf = StratifiedKFold(n_splits=n_folds, random_state=random_state, shuffle=False) 
     cms, accs = [], []
     cms_train, accs_train = [], []
     
@@ -119,8 +122,8 @@ def cross_validation(pipeline, X, y, n_folds=5, random_state=None):
         clf = make_pipeline(pipeline)
         clf.fit(X_train, y_train)
         y_pred = clf.predict(X_test)
-        cms.append(confusion_matrix(y_test, y_pred)) # TODO: verify the func returns a matrix (np.ndarray)
-        accs.append(accuracy_score(y_test, y_pred)) # TODO: verify that the func returns an accuracy score (float)
+        cms.append(confusion_matrix(y_test, y_pred)) 
+        accs.append(accuracy_score(y_test, y_pred)) 
         y_pred_train = clf.predict(X_train)
         cms_train.append(confusion_matrix(y_train, y_pred_train))
         accs_train.append(accuracy_score(y_train, y_pred_train))
@@ -128,7 +131,7 @@ def cross_validation(pipeline, X, y, n_folds=5, random_state=None):
     return cms, accs, cms_train, accs_train
 
 
-def plot_accuracy(accs_test, accs_train, ax = None, save_plot=None, plot_name=None):
+def plot_accuracy(accs_test, accs_train, ax = None, save_plot=None, plot_name=None):#draws a barplot where we can visualise accuracy scores in train and test
     if ax is None:
         f, ax = plt.subplots()
         
@@ -141,15 +144,16 @@ def plot_accuracy(accs_test, accs_train, ax = None, save_plot=None, plot_name=No
     return df
     
     
-def visualise(data):
+def visualise(data): #can be used to visualise MFCCs
     plt.figure(figsize=(10,5))
     librosa.display.specshow(data,x_axis="time")
     plt.colorbar(format="%+2f")
     plt.savefig('testplot.jpg')
     plt.show()
 
-def make_life_finite(data):
-    """
+def make_life_finite(data):#can be used to replace cornerlines or cornerpoints in a persistence diagram with too high death-coordinates
+                           #with other cornerpoints with the same birth_coordinates and death-coordinates equal to maximum finite death_coordinate, which is not a nan, plus 1 of cornerpoints in the diagram 
+    """                    
     
 
     Parameters
@@ -175,19 +179,61 @@ class Audio:
         dgm=lower_star_img(extract_mfccs(self.path))
         return make_life_finite(dgm)  
 
-def save_PDs(path_to_genres_folder="C:\\Users\\Admin\\Documents\\python\\Data\\genres_original"):
+def save_PDs(path_to_genres_folder="C:\\Users\\Admin\\Documents\\python\\Data\\genres_original",
+             saving_path="C:\\Users\\Admin\\Documents\\python"): #saves PDs corresponding to the audio tracks from the GTZAN dataset in subdirectories of the "python" directory, one for each genre
     genre_paths = [os.path.join(path_to_genres_folder, f) 
                                for f in os.listdir(path_to_genres_folder)
                                 if ".idea" not in f]
     for genre_path in genre_paths:
+        os.mkdir(os.path.join(saving_path,"PD_"+Path(genre_path).parts[-1]))
+        p=os.path.join(saving_path,"PD_"+Path(genre_path).parts[-1])
         for i in range(len(os.listdir(genre_path))):
-            np.save("PD_"+os.path.splitext(os.listdir(genre_path)[i])[0],
+            np.save(os.path.join(p,os.path.splitext(os.listdir(genre_path)[i])[0]),
                     Audio(os.path.join(genre_path,os.listdir(genre_path)[i])).get_diagram())
             
 
-
-
-def p_bottleneck(data_0,data_1): #Persim package's Bottleneck distance 
+    
+def save_PIs(path_to_PDs_folder='C:\\Users\\Admin\\Documents\\python'):#saves PIs corresponding to audio tracks in GTZAN dataset in the "python" directory
+    PD_genre_paths = [os.path.join(path_to_PDs_folder, f)
+                               for f in os.listdir(path_to_PDs_folder) 
+                               if "PD" in f]
+    diagrams=[]
+    for PD_genre_path in PD_genre_paths:
+        for i in range(len(os.listdir(PD_genre_path))):
+            diagrams.append(np.load(os.path.join(PD_genre_path,os.listdir(PD_genre_path)[i])))
+    
+    pimgr = PersistenceImager(pixel_size=1)
+    pimgr.fit(diagrams)
+    
+    j=0
+    for PD_genre_path in PD_genre_paths:
+        for i in range(len(os.listdir(PD_genre_path))):
+                   np.save(os.path.splitext(os.listdir(PD_genre_path)[i])[0].replace("PD","PI"),
+                           pimgr.transform(diagrams[j]))
+                   j+=1
+                   
+def umap_proj_plot(data,classes,labels,save_path=None):#creates a 2D UMAP projection of a dataset containing multidimensional vectors, for example PIs, divided into a certain number of classes
+    reducer = umap.UMAP()
+    reducer.fit(data)
+    projector = reducer.transform(data)
+    f, ax = plt.subplots(figsize=(10,10))
+    for i, genre in enumerate(classes):
+        inds = np.where(np.asarray(labels) == genre)[0]
+        colors = [sns.color_palette("colorblind")[i] for _ in inds]
+        ax.scatter(projector[inds, 0], 
+                   projector[inds, 1], 
+                   c = colors, 
+                   label=genre,
+                   alpha=.3)
+    leg = plt.legend()
+    for lh in leg.legendHandles: 
+        lh.set_alpha(1)    
+    if save_path is not None:
+        f.savefig(os.path.join(save_path, "umap_genres.svg"))
+        f.savefig(os.path.join(save_path, "umap_genres.png"))
+    return projector
+                   
+def p_bottleneck(data_0,data_1): #persim package's Bottleneck distance 
     """
     Calculate the Bottleneck distance between the 0-persistence diagrams
     corrisponding to data_0 and data_1 respectively 
@@ -206,35 +252,14 @@ def p_bottleneck(data_0,data_1): #Persim package's Bottleneck distance
     return distance_bottleneck  
 
 
-def g_bottleneck_approx(dgm_0,dgm_1): #Bottleneck distance con gudhi
-    return gudhi.bottleneck_distance(dgm_0, dgm_1, 0.1)
-    
 
-def g_bottleneck(dgm_0,dgm_1):
-    return gudhi.bottleneck_distance(dgm_0,dgm_1)
-    
-def save_PIs(path_to_PDs_folder='C:\\Users\\Admin\\Documents\\python'):
-    PD_genre_paths = [os.path.join(path_to_PDs_folder, f)
-                               for f in os.listdir(path_to_PDs_folder) 
-                               if "PD" in f]
-    diagrams=[]
-    for PD_genre_path in PD_genre_paths:
-        for i in range(len(os.listdir(PD_genre_path))):
-            diagrams.append(np.load(os.path.join(PD_genre_path,os.listdir(PD_genre_path)[i])))
-    
-    pimgr = PersistenceImager(pixel_size=1)
-    pimgr.fit(diagrams)
-    
-    j=0
-    for PD_genre_path in PD_genre_paths:
-        for i in range(len(os.listdir(PD_genre_path))):
-                   np.save(os.path.splitext(os.listdir(PD_genre_path)[i])[0].replace("PD","PI"),
-                           pimgr.transform(diagrams[j]))
-                   j+=1
+def g_bottleneck(dgm_0,dgm_1,e=None): #gudhi package's Bottleneck distance: 
+    return gudhi.bottleneck_distance(dgm_0,dgm_1,e=e)
     
     
-def main(path_to_data_folder="C:\\Users\\Admin\\Documents\\python",
-         save_path="C:\\Users\\Admin\\Documents\\python"):
+def main(path_to_data_folder="C:\\Users\\Admin\\Documents\\python"):
+    
+    save_mfccs()
     
     mfccs_paths=[os.path.join(path_to_data_folder, f) 
                                for f in os.listdir(path_to_data_folder) 
@@ -265,6 +290,8 @@ def main(path_to_data_folder="C:\\Users\\Admin\\Documents\\python",
                   save_plot="C:\\Users\\Admin\\Documents\\python", 
                   plot_name="mfccs_")
     
+    save_PDs()
+    save_PIs()
     
     persistence_image_paths = [os.path.join(path_to_data_folder, f) 
                                for f in os.listdir(path_to_data_folder) 
@@ -283,27 +310,8 @@ def main(path_to_data_folder="C:\\Users\\Admin\\Documents\\python",
                        for genre_imgs in pers_imgs
                        for img in genre_imgs]
     flattened_images = np.array([img.flatten() for img in reshaped_images])
-    reducer = umap.UMAP()
-    reducer.fit(flattened_images)
-    projector = reducer.transform(flattened_images)
-    f, ax = plt.subplots(figsize=(10,10))
-
-    for i, genre in enumerate(genres):
-        inds = np.where(np.asarray(labels) == genre)[0]
-        colors = [sns.color_palette("colorblind")[i] for _ in inds]
-        ax.scatter(projector[inds, 0], 
-                   projector[inds, 1], 
-                   c = colors, 
-                   label=genre,
-                   alpha=.3)
-        
-    leg = plt.legend()
-    for lh in leg.legendHandles: 
-        lh.set_alpha(1)    
-    if save_path is not None:
-        f.savefig(os.path.join(save_path, "umap_genres.svg"))
-        f.savefig(os.path.join(save_path, "umap_genres.png"))
-        
+    
+    umap_proj_plot(flattened_images,genres,labels) #project PIs on a plane with UMAP's dimension reduction
         
     cms_test_PIs, accs_test_PIs, cms_train_PIs, accs_train_PIs = cross_validation(SVC(gamma='auto', kernel='rbf'), 
                                                                                   flattened_images, 

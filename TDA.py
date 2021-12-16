@@ -91,14 +91,52 @@ def create_audio_object(data):
 
     """
     signal, sr = librosa.load(data)
-    return ipd.Audio(data,rate=sr)
-    
+    return signal, sr
 
+
+    
+def sampling_rates(path_folders="C:\\Users\\Admin\\Documents\\python\\Data\\genres_original"):
+    genre_folders = [genre for genre in os.listdir(path_folders) if "idea" not in genre]
+    sr=[]
+    for genre in genre_folders:
+        g=os.path.join(path_folders,genre)
+        for i in os.listdir(g):
+            sr.append(create_audio_object(os.path.join(g,str(i)))[1])#to do: verificare se posso usare create_audio_object
+    return sr
     
 def extract_mfccs(data):#extracts 128 mfccs from an audio wav file 
     signal, sr = librosa.load(data)
     mfccs = librosa.feature.mfcc(signal, sr=sr, n_mfcc=128)
     return(mfccs)
+
+def lower_star_filtration(img, plot=False):
+    """
+    construct a lowerstar filtration (sublevelset filtration) 
+    on an image and calculate corresponding 0-persistence
+    diagram (H_0)
+
+    Parameters
+    ----------
+    data : ndarray.
+
+    Returns
+    -------
+    ndarray.
+
+    """
+    dgm = lower_star_img(img)
+    if plot:
+        plt.figure(figsize=(10, 5))
+        plt.imshow(img)
+        plt.colorbar()
+        plt.title("Test Image")
+        plt.subplot(122)
+        plot_diagrams(dgm)
+        plt.savefig("0-PD.png")
+        plt.title("0-Persistence Diagram")
+        plt.tight_layout()
+        plt.show()
+    return dgm
 
 def save_mfccs(path_to_genres_folder="C:\\Users\\Admin\\Documents\\python\\Data\\genres_original",
                saving_path="C:\\Users\\Admin\\Documents\\python"):#saves mfccs extracted from audio tracks of the GTZAN dataset in the directory 

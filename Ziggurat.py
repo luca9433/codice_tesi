@@ -8,18 +8,24 @@ Created on Sun Jan 16 18:10:41 2022
 import numpy as np
 import math
 import os
+import itertools
     
 
 
 class Cornerpoint:
 
-    def __init__(self, id, X, Y, mult, level, merge_at_level):
+    def __init__(self, id, X, Y, mult):
         self.id = id
         self.X = X
         self.Y = Y
         self.mult = mult
-        self.level = level
-        self.merge_at_level = merge_at_level
+        
+    @property
+    def persistence(self):
+        return self.Y-self.X
+        
+    
+        
         
     
     def merging_level(self, other):
@@ -33,15 +39,15 @@ class Cornerpoint:
 			self.level = self.X-other.X + other.Y-self.Y
 		else:
             self.level=self.Y-self.X #death due to merging with the plateau
+        other.level=self.level
         return self.level
     
-    def merge(self): #dict where each key is the index of the cornerpoint 
+def merge(cornerpoints): #dict where each key is the index of the cornerpoint 
                         #merging with a given one at level k 
                         #and the corresponding value is the level k itself
-        PD=np.load("""some .npy file containing an array""")
-        cornerpoints=[Cornerpoint(p) for p in PD]
-        self.merge_at_level={c.id: self.merging_level(c) for c in cornerpoints}
-        return self.merge_at_level
+    levels=np.unique([c.level for c in cornerpoints])
+    return {k: [c for c in cornerpoints if c.level==k] for k in levels}
+        
         
         
 def main(path_to_PDs_folders="C:\Users\Admin\Documents\python"):
@@ -50,8 +56,9 @@ def main(path_to_PDs_folders="C:\Users\Admin\Documents\python"):
            for i in range(len(PD_paths))]
     PD=np.load("""some numpy file containing an array""")
     cornerpoints=[Cornerpoint(p) for p in PD]
-    cornerpoint_per_level=[[c for c in cornerpoints if c.level == c1.level] for c1 in cornerpoints and c1 != c] #First we want to compute all the merging levels
-    levels=[[merge(c) for c in cornerpoint_per_level[i]] 
-            for i in range(len(cornerpoint_per_level))]
-    
+    [cs[0].merging_level(cs[1]) for cs in itertools.combinations(cornerpoints, 2)]
+    [c.merge(cornerpoints) for c in cornerpoints] #First we want to compute all the merging levels
+    levels=merge(cornerpoints) 
+            
+    #Now we want to sort the levels
 

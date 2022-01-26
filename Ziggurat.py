@@ -13,10 +13,10 @@ import math
 
 class Cornerpoint:
 
-    def __init__(self, id, X, Y, level):
+    def __init__(self, id, x, y, level):
         self.id = id
-        self.X = X
-        self.Y = Y
+        self.x = x
+        self.y = y
         #self.mult = mult possibly to be added as an argument 
         self.level = level
         
@@ -25,27 +25,27 @@ class Cornerpoint:
         return self.Y-self.X
         
     def merging_level(self, other):
-        if ((other.X<self.X) and 
-            (other.Y-other.X-self.Y+self.X>0) and 
-            (other.X>2*self.X-self.Y) and 
-            (other.Y <= self.Y) and 
-            (self.X-other.X < self.level)):
+        if ((other.x<self.x) and 
+            (other.y-other.x-self.y+self.x>0) and 
+            (other.x>2*self.x-self.y) and 
+            (other.y <= self.y) and 
+            (self.x-other.x < self.level)):
 # upside triangle
          		self.level = self.X-other.X
-        elif ((other.Y>self.Y) and 
-             (other.Y-other.X-self.Y+self.X >=0) and 
-             (other.Y <2*self.Y-self.X) and 
-             (other.X >= self.X) and 
-             (other.Y-self.Y < self.level)):
+        elif ((other.y>self.y) and 
+             (other.y-other.x-self.y+self.x >=0) and 
+             (other.y <2*self.y-self.x) and 
+             (other.x >= self.x) and 
+             (other.y-self.y < self.level)):
 # downside triangle
-                self.level = other.Y-self.Y
-        elif ((other.Y>self.Y)  and 
-             (other.X<self.X) and 
-             (other.Y<other.X +2*(self.Y-self.X)) and 
-             (self.X-other.X + other.Y-self.Y < self.level)):
-                self.level = self.X-other.X + other.Y-self.Y
-        else: #(self.Y-self.X < self.level)
-                self.level=self.Y-self.X #death due to merging with the plateau
+                self.level = other.y-self.y
+        elif ((other.y>self.y)  and 
+             (other.x<self.x) and 
+             (other.y<other.x +2*(self.y-self.x)) and 
+             (self.x-other.x + other.y-self.y < self.level)):
+                self.level = self.x-other.x + other.y-self.y
+        else: #(self.y-self.x < self.level)
+                self.level=self.y-self.x #death due to merging with the plateau
         #other.level=self.level
         return  self.level
     

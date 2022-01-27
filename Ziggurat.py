@@ -31,7 +31,7 @@ class Cornerpoint:
             (other.y <= self.y) and 
             (self.x-other.x < self.level)):
 # upside triangle
-         		self.level = self.X-other.X
+         		self.level = self.x-other.x
         elif ((other.y>self.y) and 
              (other.y-other.x-self.y+self.x >=0) and 
              (other.y <2*self.y-self.x) and 
@@ -44,7 +44,7 @@ class Cornerpoint:
              (other.y<other.x +2*(self.y-self.x)) and 
              (self.x-other.x + other.y-self.y < self.level)):
                 self.level = self.x-other.x + other.y-self.y
-        else: #(self.y-self.x < self.level)
+        elif (self.y-self.x < self.level):
                 self.level=self.y-self.x #death due to merging with the plateau
         #other.level=self.level
         return  self.level

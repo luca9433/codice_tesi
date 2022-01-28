@@ -6,9 +6,7 @@ Created on Sun Jan 16 18:10:41 2022
 """
 
 import numpy as np
-import itertools
-import math
-    
+import itertools    
 
 
 class Cornerpoint:
@@ -22,8 +20,26 @@ class Cornerpoint:
         
     @property
     def persistence(self):
-        return self.Y-self.X
-        
+        return self.y - self.x
+    
+    def __eq__(self, other):
+        return self.x == other.x and self.y == other.y
+    
+    def __lt__(self, other):
+        return self.level < other.level
+    
+    def __le__(self, other):
+        return self.level <= other.level
+    
+    def __gt__(self, other):
+        return self.level > other.level
+    
+    def __ge__(self, other):
+        return self.level >= other.level
+
+    def __ne__(self, other):
+        return self.x != other.x or self.y != other.y
+    
     def merging_level(self, other):
         if ((other.x<self.x) and 
             (other.y-other.x-self.y+self.x>0) and 
@@ -44,8 +60,8 @@ class Cornerpoint:
              (other.y<other.x +2*(self.y-self.x)) and 
              (self.x-other.x + other.y-self.y < self.level)):
                 self.level = self.x-other.x + other.y-self.y
-        elif (self.y-self.x < self.level):
-                self.level=self.y-self.x #death due to merging with the plateau
+        elif (self.persistence < self.level):
+                self.level=self.persistence #death due to merging with the plateau
         #other.level=self.level
         return  self.level
     
@@ -54,24 +70,25 @@ class Cornerpoint:
                         #and the corresponding value is the level k itself
     #levels=np.unique([c.level for c in cornerpoints])
     #return {k: [c.id for c in cornerpoints if c.level==k] for k in levels}
-        
+    
+    def __repr__(self):
+        return "Cornerpoint.\nx: {}\ty: {}\nlevel: {}\n".format(self.x, self.y, self.level)
+    
 def main(data_file="C:\\Users\\Admin\\Documents\\python\\gurrieri_dataset_npy.npy"):       
     PD=np.load(data_file)
     print(PD)
-    k_max=0
-    k=math.inf
-    cornerpoints=[Cornerpoint(int(p[0]), p[1], p[2], k) for p in PD]
-    #for (i,h) in itertools.combinations(cornerpoints, 2):
-        #i.level=i.merging_level(h)
-    for i in range(len(cornerpoints)):
-        for h in list(range(i)) + list(range(i+1,len(cornerpoints))):
-            cornerpoints[i].level=cornerpoints[i].merging_level(cornerpoints[h])
-        if cornerpoints[i].level > k_max:
-            k_max = cornerpoints[i].level
-            j=i
-    cornerpoints[j].level = math.inf
-    for i in range(len(cornerpoints)):
-        print(cornerpoints[i].level)
+    cornerpoints=[Cornerpoint(int(p[0]), p[1], p[2], np.inf) for p in PD]
+    
+    for (cp1, cp2) in itertools.product(cornerpoints, repeat=2):
+        if cp1.id != cp2.id:
+            cp1.level=cp1.merging_level(cp2)
+        
+        
+    
+    cornerpoints = sorted(cornerpoints)
+    cornerpoints[-1]=np.inf
+    print(cornerpoints)
+    
 
 
 

@@ -89,7 +89,7 @@ def main(data_file="C:\\Users\\Admin\\Documents\\python\\gurrieri_dataset_npy.np
             cp1.level = cp1.merging_level(cp2)
         
     cornerpoints = sorted(cornerpoints)
-    cornerpoints[-1]=np.inf
+    cornerpoints[-1] = np.inf
     print(cornerpoints)
     #{k: [c.id for c in cornerpoints if c.level==k] for k in }
     

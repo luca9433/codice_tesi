@@ -73,7 +73,12 @@ class Cornerpoint:
     
     def __repr__(self):
         return "Cornerpoint.\nx: {}\ty: {}\nlevel: {}\n".format(self.x, self.y, self.level)
-   
+
+#def merge(cornerpoints): #dict where each key is the index of the cornerpoint 
+                        #merging with a given one at level k 
+                        #and the corresponding value is the level k itself
+    #levels=np.unique([c.level for c in cornerpoints])
+    #return {k: [c.id for c in cornerpoints if c.level==k] for k in levels}
  
 def main(data_file="C:\\Users\\Admin\\Documents\\python\\gurrieri_dataset_npy.npy"):       
     pers_dgm = np.load(data_file)
@@ -81,11 +86,19 @@ def main(data_file="C:\\Users\\Admin\\Documents\\python\\gurrieri_dataset_npy.np
     
     for (cp1, cp2) in itertools.product(cornerpoints, repeat=2):
         if cp1.id != cp2.id:
-            cp1.level=cp1.merging_level(cp2)
+            cp1.level = cp1.merging_level(cp2)
         
     cornerpoints = sorted(cornerpoints)
     cornerpoints[-1]=np.inf
     print(cornerpoints)
+    #{k: [c.id for c in cornerpoints if c.level==k] for k in }
+    
+    #=[cs[0].merging_level(cs[1]) for cs in itertools.combinations(cornerpoints, 2)]
+    #print(k)
+    #print([c.merge(cornerpoints) for c in cornerpoints]) #First we want to compute all the merging levels
+    #levels=merge(cornerpoints)
+    #print(levels, "\n")
+    
 
     
 if __name__=="__main__":

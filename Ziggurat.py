@@ -57,7 +57,7 @@ class Cornerpoint:
         
     def case3(self, other):
         return ((other.y > self.y) and (other.x < self.x) and 
-                (other.y < other.x + 2*(self.y - self.x)) and
+                (other.persistence < 2*self.persistence) and
                 (other.persistence - self.persistence < self.level))
     
     def merging_level(self, other):
@@ -66,7 +66,7 @@ class Cornerpoint:
         elif self.downside_triangle(other):
             self.level = other.y - self.y
         elif self.case3(other):
-            self.level = self.x - other.x + other.y - self.y
+            self.level = other.persistence - self.persistence
         elif self.plateau_merge:
             self.level = self.persistence
         return  self.level

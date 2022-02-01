@@ -89,14 +89,20 @@ def main(data_file="C:\\Users\\Admin\\Documents\\python\\dgm_example.npy"):
     pers_dgm = np.load(data_file)
     cornerpoints=[Cornerpoint(int(p[0]), p[1], p[2], np.inf) for p in pers_dgm] 
     
-    for (cp1, cp2) in itertools.product(cornerpoints, repeat=2):
-        if cp1.id != cp2.id:
-            cp1.level = cp1.merging_level(cp2)
+    #for (cp1, cp2) in itertools.product(cornerpoints, repeat=2):
+        #if cp1.id != cp2.id:
+            #cp1.level = cp1.merging_level(cp2)
+            #cp1.setBuddy(cp2)
             
+    for i in range(len(cornerpoints)):
+        for h in list(range(i)) + list(range(i+1,len(cornerpoints))):
+            cornerpoints[i].level = cornerpoints[i].merging_level(cornerpoints[h])
+        cornerpoints[i].setBuddy#...I would like to keep track of the cornerpoint    
+                                #mergigng with the cornerpoint
+                                #with id=i at this level.
             
     
-    buddies = [(cp, cp.merging_buddy) for cp in cornerpoints]
-    print(buddies)
+    #buddies = [(cp, cp.merging_buddy) for cp in cornerpoints]
     cornerpoints = sorted(cornerpoints)
     cornerpoints[-1] = np.inf
     print(cornerpoints)

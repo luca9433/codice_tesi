@@ -71,6 +71,11 @@ class Cornerpoint:
             self.level = self.persistence
         return  self.level
     
+    def setBuddy(self, merging_buddy):
+        self.merging_buddy = merging_buddy
+        merging_buddy.merging_buddy = self
+        
+    
     def __repr__(self):
         return "Cornerpoint.\nx: {}\ty: {}\nlevel: {}\n".format(self.x, self.y, self.level)
 
@@ -80,14 +85,18 @@ class Cornerpoint:
     #levels=np.unique([c.level for c in cornerpoints])
     #return {k: [c.id for c in cornerpoints if c.level==k] for k in levels}
  
-def main(data_file="C:\\Users\\Admin\\Documents\\python\\gurrieri_dataset_npy.npy"):       
+def main(data_file="C:\\Users\\Admin\\Documents\\python\\dgm_example.npy"):       
     pers_dgm = np.load(data_file)
     cornerpoints=[Cornerpoint(int(p[0]), p[1], p[2], np.inf) for p in pers_dgm] 
     
     for (cp1, cp2) in itertools.product(cornerpoints, repeat=2):
         if cp1.id != cp2.id:
             cp1.level = cp1.merging_level(cp2)
-        
+            
+            
+    
+    buddies = [(cp, cp.merging_buddy) for cp in cornerpoints]
+    print(buddies)
     cornerpoints = sorted(cornerpoints)
     cornerpoints[-1] = np.inf
     print(cornerpoints)

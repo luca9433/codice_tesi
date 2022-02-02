@@ -10,12 +10,14 @@ import itertools
 
 
 class Cornerpoint:
-    def __init__(self, id, x, y, level, mult=1):
+    def __init__(self, id, x, y, level, mult=1, merges_at=None, merges_with=None):
         self.id = id
         self.x = x
         self.y = y
         self.mult = mult 
         self.level = level
+        self.merges_at = merges_at
+        self.merges_with = merges_with
         
     @property
     def persistence(self):
@@ -24,6 +26,10 @@ class Cornerpoint:
     @property
     def plateau_merge(self):
         return self.persistence < self.level
+    
+    @property
+    def merging_info(self):
+        return self.merges_at, self.merges_with
     
     def __eq__(self, other):
         return self.x == other.x and self.y == other.y
@@ -70,49 +76,55 @@ class Cornerpoint:
         elif self.plateau_merge:
             self.level = self.persistence
         return  self.level
-    
-    def setBuddy(self, merging_buddy):
-        self.merging_buddy = merging_buddy
-        merging_buddy.merging_buddy = self
         
     
     def __repr__(self):
         return "Cornerpoint.\nx: {}\ty: {}\nlevel: {}\n".format(self.x, self.y, self.level)
 
-#def merge(cornerpoints): #dict where each key is the index of the cornerpoint 
-                        #merging with a given one at level k 
-                        #and the corresponding value is the level k itself
-    #levels=np.unique([c.level for c in cornerpoints])
-    #return {k: [c.id for c in cornerpoints if c.level==k] for k in levels}
- 
-def main(data_file="C:\\Users\\Admin\\Documents\\python\\dgm_example.npy"):       
+def merge(cp1, cp2): 
+    
+    if  cp1.mult > cp2.mult:
+         cp1.mult = cp1.mult + cp2.mult
+         cp2.level = cp1.level
+    elif cp1.mult < cp2.mult:
+         cp2.mult = cp1.mult + cp2.mult
+         cp1.level = cp2.level
+    else:
+        if cp1.persistence > cp2.persistence:
+            cp1.mult = cp1.mult + cp2.mult
+            cp2.level = cp1.level
+        elif cp1.persistence < cp2.persistence:
+            cp2.mult = cp1.mult + cp2.mult
+            cp1.level = cp2.level
+        else:
+            if cp1.x > cp2.x:
+                cp1.mult = cp1.mult + cp2.mult
+                cp2.level = cp1.level
+            elif cp1.x < cp2.x:
+                cp2.mult = cp1.mult + cp2.mult
+                cp1.level = cp2.level
+                
+    cp1.merges_at = cp2.level
+    cp1.merges_with = cp2
+    cp2.merges_at = cp1.level
+    cp2.merges_with = cp1
+    
+    cp1.merging_info = cp1.merges_at, cp1.merges_with
+    cp2.merging_info = cp2.merges_at, cp2.merges_with
+    return cp1.merging_info, cp2.merging_info
+       
+def main(data_file="C:\\Users\\Admin\\Documents\\python\\gurrieri_dataset_npy.npy"):       
     pers_dgm = np.load(data_file)
     cornerpoints=[Cornerpoint(int(p[0]), p[1], p[2], np.inf) for p in pers_dgm] 
     
-    #for (cp1, cp2) in itertools.product(cornerpoints, repeat=2):
-        #if cp1.id != cp2.id:
-            #cp1.level = cp1.merging_level(cp2)
-            #cp1.setBuddy(cp2)
-            
-    for i in range(len(cornerpoints)):
-        for h in list(range(i)) + list(range(i+1,len(cornerpoints))):
-            cornerpoints[i].level = cornerpoints[i].merging_level(cornerpoints[h])
-        cornerpoints[i].setBuddy#...I would like to keep track of the cornerpoint    
-                                #mergigng with the cornerpoint
-                                #with id=i at this level.
-            
-    
-    #buddies = [(cp, cp.merging_buddy) for cp in cornerpoints]
+    for (cp1, cp2) in itertools.product(cornerpoints, repeat=2):
+        if cp1.id != cp2.id:
+            cp1.level = cp1.merging_level(cp2)
+        
     cornerpoints = sorted(cornerpoints)
     cornerpoints[-1] = np.inf
     print(cornerpoints)
-    #{k: [c.id for c in cornerpoints if c.level==k] for k in }
     
-    #=[cs[0].merging_level(cs[1]) for cs in itertools.combinations(cornerpoints, 2)]
-    #print(k)
-    #print([c.merge(cornerpoints) for c in cornerpoints]) #First we want to compute all the merging levels
-    #levels=merge(cornerpoints)
-    #print(levels, "\n")
     
 
     

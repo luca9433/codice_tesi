@@ -86,65 +86,64 @@ class Cornerpoint:
             other.merges_with.append(self)
         else:
             self.merges_with.append(other)
-        return  self.level
+        return  self.level, other.merges_with, self.merges_with
         
-    
+        
     def __repr__(self):
         return "Cornerpoint.\nx: {}\ty: {}\nlevel: {}\n".format(self.x, self.y, self.level)
 
-def merge(cp1, cp2): 
+def merge(cp):
+    support = -1
+    min_ind = 0
     
-    if  cp1.mult > cp2.mult:
-         cp1.mult = cp1.mult + cp2.mult
-         cp2.level = cp1.level
-    elif cp1.mult < cp2.mult:
-         cp2.mult = cp1.mult + cp2.mult
-         cp1.level = cp2.level
-    else:
-        if cp1.persistence > cp2.persistence:
-            cp1.mult = cp1.mult + cp2.mult
-            cp2.level = cp1.level
-        elif cp1.persistence < cp2.persistence:
-            cp2.mult = cp1.mult + cp2.mult
-            cp1.level = cp2.level
+    for l in range(len(cp.merges_with)):
+        if support == -1:
+            if cp.merges_with[l] > cp:
+                support = cp.merges_with[l].level
+                min_ind = l
         else:
-            if cp1.x > cp2.x:
-                cp1.mult = cp1.mult + cp2.mult
-                cp2.level = cp1.level
-            elif cp1.x < cp2.x:
-                cp2.mult = cp1.mult + cp2.mult
-                cp1.level = cp2.level
-                
-    cp1.merges_at = cp2.level
-    cp1.merges_with = cp2
-    cp2.merges_at = cp1.level
-    cp2.merges_with = cp1
+            if cp.merges_with[l] > cp and cp.merges_with[l].level < support:
+                cp.merges_with[l].level
+                min_ind = l
+                    
+    return cp.merges_with[min_ind]
+
+def merging_list(d, cp):
+    """"
+    Parameters
+    ----------
+    d: dict
+    cp: Cornerpoint
     
-    cp1.merging_info = cp1.merges_at, cp1.merges_with
-    cp2.merging_info = cp2.merges_at, cp2.merges_with
-    return cp1.merging_info, cp2.merging_info
+    Returns
+    -------
+    list
+    """
+    merge_list = [cp.id]
+    while cp.level != np.inf:
+        cp = d[cp.id]
+        merge_list += [cp.id]
+    
+    return merge_list
+              
        
-def main(data_file="C:\\Users\\Admin\\Documents\\python\\dgm_example.npy"):       
+def main(data_file="C:\\Users\\Admin\\Documents\\python\\dgm_example_2.npy"):       
     pers_dgm = np.load(data_file)
     cornerpoints=[Cornerpoint(int(p[0]), p[1], p[2], np.inf) for p in pers_dgm] 
     
     for (cp1, cp2) in itertools.product(cornerpoints, repeat=2):
         if cp1.id != cp2.id:
             cp1.merging_level(cp2)
-        
+            
     cornerpoints = sorted(cornerpoints)
     cornerpoints[-1].level = np.inf
+        
+    dct = {cp.id: merge(cp) for cp in cornerpoints}
     for i in range(len(cornerpoints)):
-        print((cornerpoints[i], cornerpoints[i].merges_with, cornerpoints[i] < cornerpoints[i].merges_with))
-        if cornerpoints[i] < cornerpoints[i].merges_with:
-            cornerpoints[i].merges_with.level = cornerpoints[i].level
-            #elderly rule implementation
-            
-    
-    
+        merging_sequence = merging_list(dct, cornerpoints[i])
+        print(cornerpoints[i].id, merging_sequence)
     
 
-    
 if __name__=="__main__":
     main()
 

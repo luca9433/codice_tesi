@@ -87,6 +87,12 @@ class Cornerpoint:
         else:
             self.merges_with.append(other)
         return  self.level, other.merges_with, self.merges_with
+    
+    def is_older2(self, other):
+        if self.mult != other.mult:
+            return self.mult > other.mult
+        else:
+            return self.is_older(other)        
         
         
     def __repr__(self):
@@ -94,19 +100,19 @@ class Cornerpoint:
 
 def merge(cp):
     support = -1
-    min_ind = 0
+    ind_min = 0
     
     for l in range(len(cp.merges_with)):
         if support == -1:
             if cp.merges_with[l] > cp:
                 support = cp.merges_with[l].level
-                min_ind = l
+                ind_min = l
         else:
             if cp.merges_with[l] > cp and cp.merges_with[l].level < support:
                 cp.merges_with[l].level
-                min_ind = l
+                ind_min = l
                     
-    return cp.merges_with[min_ind]
+    return cp.merges_with[ind_min]
 
 def merging_list(d, cp):
     """"
@@ -125,11 +131,41 @@ def merging_list(d, cp):
         merge_list += [cp.id]
     
     return merge_list
-              
-       
-def main(data_file="C:\\Users\\Admin\\Documents\\python\\dgm_example_2.npy"):       
+
+def merge2(cp1, cp2):
+    if cp1.is_older2(cp2):
+        cp2.merges_with.append(cp1)
+        cp1.mult = cp1.mult + cp2.mult
+        return False
+    else:
+        cp1.merges_with.append(cp2)
+        cp2.mult = cp1.mult + cp2.mult
+        return True
+    
+def select(cps, p_min):
+    """"
+    Parameters
+    ----------
+    cps: list
+    p_min: float
+    
+    Returns
+    -------
+    list
+    
+    """
+    cp_min = min({cp for cp in cps})
+    selected_cps = []
+    for i in range(len(cps)):
+        if max({abs(cps[i].y - cp_min.y), abs(cps[i].x - cp_min.x)}) < p_min:
+            selected_cps += [cps[i]]
+            
+    return selected_cps
+        
+    
+def main(data_file="C:\\Users\\Admin\\Documents\\python\\dgm_example_4.npy"):       
     pers_dgm = np.load(data_file)
-    cornerpoints=[Cornerpoint(int(p[0]), p[1], p[2], np.inf) for p in pers_dgm] 
+    cornerpoints = [Cornerpoint(int(p[0]), p[1], p[2], np.inf) for p in pers_dgm] 
     
     for (cp1, cp2) in itertools.product(cornerpoints, repeat=2):
         if cp1.id != cp2.id:
@@ -137,11 +173,30 @@ def main(data_file="C:\\Users\\Admin\\Documents\\python\\dgm_example_2.npy"):
             
     cornerpoints = sorted(cornerpoints)
     cornerpoints[-1].level = np.inf
+    print(cornerpoints)
+    print([cp.level for cp in cornerpoints])
         
     dct = {cp.id: merge(cp) for cp in cornerpoints}
     for i in range(len(cornerpoints)):
         merging_sequence = merging_list(dct, cornerpoints[i])
         print(cornerpoints[i].id, merging_sequence)
+        
+    #p_min = min({cp.persistence for cp in cornerpoints})
+    #print(select(cornerpoints, p_min))
+    
+    #for pairs (cp1, cp2) of consecutive cornerpointsfrom select(cornerpoints, 
+                                                                    #p_min):
+    #   merge(cp1, cp2)
+        #if merge2(cp1, cp2) is True:
+            #cp2 = "the next of cp2 in select(cornerpoints, #p_min)
+            #cp1 = cp2
+        #else:
+            #cp2 = "the next of cp2 in selected_cps"
+            
+    
+    
+        
+    
     
 
 if __name__=="__main__":

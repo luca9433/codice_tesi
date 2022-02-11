@@ -154,7 +154,7 @@ def select(cps, p_min):
     list
     
     """
-    cp_min = min({cp for cp in cps})
+    cp_min = min(cps)
     selected_cps = []
     for i in range(len(cps)):
         if max({abs(cps[i].y - cp_min.y), abs(cps[i].x - cp_min.x)}) < p_min:
@@ -170,7 +170,7 @@ def main(data_file="C:\\Users\\Admin\\Documents\\python\\dgm_example_4.npy"):
     for (cp1, cp2) in itertools.product(cornerpoints, repeat=2):
         if cp1.id != cp2.id:
             cp1.merging_level(cp2)
-            
+    
     cornerpoints = sorted(cornerpoints)
     cornerpoints[-1].level = np.inf
     print(cornerpoints)
@@ -181,8 +181,11 @@ def main(data_file="C:\\Users\\Admin\\Documents\\python\\dgm_example_4.npy"):
         merging_sequence = merging_list(dct, cornerpoints[i])
         print(cornerpoints[i].id, merging_sequence)
         
-    #p_min = min({cp.persistence for cp in cornerpoints})
-    #print(select(cornerpoints, p_min))
+    p_min = min({cp.persistence for cp in cornerpoints})
+    print(p_min)
+    print(select(cornerpoints, p_min))
+    
+    #define a function which does the selection on the ramaining elements of the list 
     
     #for pairs (cp1, cp2) of consecutive cornerpointsfrom select(cornerpoints, 
                                                                     #p_min):

@@ -6,7 +6,8 @@ Created on Sun Jan 16 18:10:41 2022
 """
 
 import numpy as np
-import itertools    
+import itertools  
+import pandas as pd  
 
 
 class Cornerpoint:
@@ -96,7 +97,7 @@ class Cornerpoint:
         
         
     def __repr__(self):
-        return "Cornerpoint.\nx: {}\ty: {}\nlevel: {}\n".format(self.x, self.y, self.level)
+        return "Cornerpoint.\nx: {}\ty: {}\nlevel: {}\nmult: {}\n".format(self.x, self.y, self.level, self.mult)
 
 def merge(cp):
     support = -1
@@ -134,13 +135,11 @@ def merging_list(d, cp):
 
 def merge2(cp1, cp2):
     if cp1.is_older2(cp2):
-        cp2.merges_with.append(cp1)
         cp1.mult = cp1.mult + cp2.mult
-        return False
     else:
-        cp1.merges_with.append(cp2)
         cp2.mult = cp1.mult + cp2.mult
-        return True
+    return cp1.mult, cp2.mult
+        
     
 def select(cps, p_min):
     """"
@@ -155,41 +154,106 @@ def select(cps, p_min):
     
     """
     cp_min = min(cps)
-    selected_cps = []
-    for i in range(len(cps)):
-        if max({abs(cps[i].y - cp_min.y), abs(cps[i].x - cp_min.x)}) < p_min:
-            selected_cps += [cps[i]]
+    selected_cps = [cp for cp in cps if max({abs(cp.x - cp_min.x),
+                                             abs(cp.y - cp_min.y)}) < p_min]
+    #cps = [cp for cp in cps if cp not in selected_cps]
+    #cps = sorted(cps)
             
-    return selected_cps
+    return sorted(selected_cps)
         
     
-def main(data_file="C:\\Users\\Admin\\Documents\\python\\dgm_example_4.npy"):       
+def main(data_file="C:\\Users\\Admin\\Documents\\python\\dgm_example_5.npy"):       
     pers_dgm = np.load(data_file)
     cornerpoints = [Cornerpoint(int(p[0]), p[1], p[2], np.inf) for p in pers_dgm] 
-    
     for (cp1, cp2) in itertools.product(cornerpoints, repeat=2):
         if cp1.id != cp2.id:
             cp1.merging_level(cp2)
     
     cornerpoints = sorted(cornerpoints)
     cornerpoints[-1].level = np.inf
-    print(cornerpoints)
-    print([cp.level for cp in cornerpoints])
+    print([(cp.x,cp.y) for cp in cornerpoints])
         
-    dct = {cp.id: merge(cp) for cp in cornerpoints}
+    dct = {cp.id: merge(cp) for cp in cornerpoints} 
     for i in range(len(cornerpoints)):
-        merging_sequence = merging_list(dct, cornerpoints[i])
-        print(cornerpoints[i].id, merging_sequence)
+        merging_sequence = merging_list(dct, cornerpoints[i]) #merging according 
+        print(cornerpoints[i].id, merging_sequence)           #to the original
+                                                              #elderly rule
         
     p_min = min({cp.persistence for cp in cornerpoints})
     print(p_min)
-    print(select(cornerpoints, p_min))
+    selections = []
+    
+    while(len(cornerpoints) != 0): #We want to apply the new elderly rule locally.
+        selected_cornerpoints = select(cornerpoints, p_min) #With the function 
+        selections += [selected_cornerpoints]               #select, we divide
+        cornerpoints = [cp for cp in cornerpoints           #the diagram into
+                        if cp not in selected_cornerpoints] #"cornerpoint clusters" 
+        cornerpoints = sorted(cornerpoints)                 #ordered by level 
+                                                            #with infinity-distance 
+                                                            #from the point 
+                                                            #with minimum level 
+                                                            #of the cluster 
+                                                            #less than the 
+                                                            #minimum persistence 
+                                                            #of a point of the
+                                                            #entire diagram.
+        
+        
+    #We obtain the list selections whose elements are the lists of cornerpoints of each "cluster"
+    #ordered by level.
+    #If necessary, we can represent each cluster in a dataframe, using the following code 
+    dataframes = []
+        
+    for c in range(len(selections)):
+        ids = [selections[c][i].id for i in range(len(selections[c]))]
+        xs = [selections[c][i].x for i in range(len(selections[c]))]
+        ys = [selections[c][i].y for i in range(len(selections[c]))]
+        levels = [selections[c][i].level for i in range(len(selections[c]))]
+        mults = [selections[c][i].mult for i in range(len(selections[c]))]
+        d = {"id": ids, "x": xs, "y": ys, "level": levels, "mult": mults}
+        dataframe = pd.DataFrame(d, index=range(1, len(selections[c])+1))
+        dataframes += [dataframe]
+        
+    
+    for c in range(len(selections)): #Local application
+        for (cp1, cp2) in zip(selections[c], selections[c][1:]):
+            merge2(cp1, cp2)
+            if cp1.is_older2(cp2):
+               cp2 = cp1
+        
+    cum_mults = [[(cp.id,cp.mult) for cp in selections[c]] 
+                 for c in range(len(selections))]
+    print(cum_mults)
+        
+                
+                
+                
+    
+ 
+        
+    
+        
+        #min_cor = cornerpoints[0]
+        #selected_cps = [cp for cp in cornerpoints if max({abs(cp.x - min_cor.x),
+                                                          #abs(cp.y - min_cor.y)}) < p_min]
+        #print(selected_cps)
+        #frame["selection_"+str(c)] = selected_cps
+        #c+=1
+        #cornerpoints = [x for x in cornerpoints if x not in selected_cps]
+        #cornerpoints = sorted(cornerpoints)
+        #print(cornerpoints)
+        
+        
+    
+    
+    
+        
+    
     
     #define a function which does the selection on the ramaining elements of the list 
     
-    #for pairs (cp1, cp2) of consecutive cornerpointsfrom select(cornerpoints, 
-                                                                    #p_min):
-    #   merge(cp1, cp2)
+    #for i in range(len(dataframe[c]))
+    #   merge(dataf, cp2)
         #if merge2(cp1, cp2) is True:
             #cp2 = "the next of cp2 in select(cornerpoints, #p_min)
             #cp1 = cp2

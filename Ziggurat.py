@@ -8,7 +8,6 @@ Created on Sun Jan 16 18:10:41 2022
 import numpy as np
 import itertools  
 import pandas as pd
-import copy
 
 
 class Cornerpoint:

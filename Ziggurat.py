@@ -7,7 +7,8 @@ Created on Sun Jan 16 18:10:41 2022
 
 import numpy as np
 import itertools  
-import pandas as pd  
+import pandas as pd
+import copy
 
 
 class Cornerpoint:
@@ -17,7 +18,8 @@ class Cornerpoint:
         self.y = y
         self.level = level
         self.mult = mult
-        self.merges_with = [self]
+        self.merges_with = [self] #original elderly rule
+        self.merges_with2 = [self] #new elderly rule
         
     @property
     def persistence(self):
@@ -135,10 +137,12 @@ def merging_list(d, cp):
 
 def merge2(cp1, cp2):
     if cp1.is_older2(cp2):
+        cp2.merges_with2.append(cp1)
         cp1.mult = cp1.mult + cp2.mult
     else:
+        cp1.merges_with2.append(cp2)
         cp2.mult = cp1.mult + cp2.mult
-    return cp1.mult, cp2.mult
+    return ([cp1.mult, cp1.merges_with2], [cp2.mult, cp2.merges_with2])
         
     
 def select(cps, p_min):
@@ -156,6 +160,7 @@ def select(cps, p_min):
     cp_min = min(cps)
     selected_cps = [cp for cp in cps if max({abs(cp.x - cp_min.x),
                                              abs(cp.y - cp_min.y)}) < p_min]
+    
     #cps = [cp for cp in cps if cp not in selected_cps]
     #cps = sorted(cps)
             
@@ -171,7 +176,7 @@ def main(data_file="C:\\Users\\Admin\\Documents\\python\\dgm_example_5.npy"):
     
     cornerpoints = sorted(cornerpoints)
     cornerpoints[-1].level = np.inf
-    print([(cp.x,cp.y) for cp in cornerpoints])
+    print([(cp.id,cp.persistence,cp.level) for cp in cornerpoints])
         
     dct = {cp.id: merge(cp) for cp in cornerpoints} 
     for i in range(len(cornerpoints)):
@@ -214,57 +219,33 @@ def main(data_file="C:\\Users\\Admin\\Documents\\python\\dgm_example_5.npy"):
         dataframe = pd.DataFrame(d, index=range(1, len(selections[c])+1))
         dataframes += [dataframe]
         
+    print([cp.id for cp in selections[0]])
+    print(selections[0])
     
     for c in range(len(selections)): #Local application
-        for (cp1, cp2) in zip(selections[c], selections[c][1:]):
-            merge2(cp1, cp2)
-            if cp1.is_older2(cp2):
-               cp2 = cp1
-        
-    cum_mults = [[(cp.id,cp.mult) for cp in selections[c]] 
+        #for (cp1, cp2) in zip(selections[c], selections[c][1:]):
+            #fanne una copia e vedi se selections rimane uguale dopo il ciclo
+        selection_twin = selections[c].copy()   
+        presumed_older = selection_twin[0]
+        for i in range(1, len(selections[c])):
+            merge2(presumed_older, selection_twin[i])
+            print(presumed_older.id, selection_twin[i].id)
+            if presumed_older.is_older2(selection_twin[i]):
+                selection_twin[i] = presumed_older
+            presumed_older = selection_twin[i]
+            
+    print([[selection[i].id for i in range(len(selection))] for selection in selections])    
+    cum_mults = [[(cp.id, cp.mult) 
+                 for cp in selections[c]] 
                  for c in range(len(selections))]
     print(cum_mults)
-        
-                
-                
-                
     
- 
-        
-    
-        
-        #min_cor = cornerpoints[0]
-        #selected_cps = [cp for cp in cornerpoints if max({abs(cp.x - min_cor.x),
-                                                          #abs(cp.y - min_cor.y)}) < p_min]
-        #print(selected_cps)
-        #frame["selection_"+str(c)] = selected_cps
-        #c+=1
-        #cornerpoints = [x for x in cornerpoints if x not in selected_cps]
-        #cornerpoints = sorted(cornerpoints)
-        #print(cornerpoints)
-        
-        
-    
-    
-    
-        
-    
-    
-    #define a function which does the selection on the ramaining elements of the list 
-    
-    #for i in range(len(dataframe[c]))
-    #   merge(dataf, cp2)
-        #if merge2(cp1, cp2) is True:
-            #cp2 = "the next of cp2 in select(cornerpoints, #p_min)
-            #cp1 = cp2
-        #else:
-            #cp2 = "the next of cp2 in selected_cps"
-            
-    
-    
-        
-    
-    
+    dct2 = [{cp.id: [cp.merges_with2[i].id for i in range(len(cp.merges_with2))] 
+                     for cp in selections[c]} 
+                        for c in range(len(selections))]
+    print(dct2)
+
+                                     
 
 if __name__=="__main__":
     main()

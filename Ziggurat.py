@@ -9,6 +9,15 @@ import numpy as np
 import itertools  
 import pandas as pd
 
+import time
+import warnings
+import matplotlib.pyplot as plt
+
+from sklearn import cluster, datasets, mixture
+from sklearn.neighbors import kneighbors_graph
+from sklearn.preprocessing import StandardScaler
+from itertools import cycle, islice
+
 
 class Cornerpoint:
     def __init__(self, id, x, y, level, mult=1):
@@ -144,7 +153,7 @@ def merge2(cp1, cp2):
     return ([cp1.mult, cp1.merges_with2], [cp2.mult, cp2.merges_with2])
         
     
-def select(cps, p_min):
+def select(cps, p_min): #select points to 
     """"
     Parameters
     ----------
@@ -159,11 +168,19 @@ def select(cps, p_min):
     cp_min = min(cps)
     selected_cps = [cp for cp in cps if max({abs(cp.x - cp_min.x),
                                              abs(cp.y - cp_min.y)}) < p_min]
-    
-    #cps = [cp for cp in cps if cp not in selected_cps]
-    #cps = sorted(cps)
             
     return sorted(selected_cps)
+
+def merge_list(cps): #update mergings and multiplicities according to the new elderly rule
+
+    cps_twin = cps.copy()   
+    presumed_older = cps_twin[0]
+    for i in range(1, len(cps)):
+            merge2(presumed_older, cps_twin[i])
+            print(presumed_older.id, cps_twin[i].id)
+            if presumed_older.is_older2(cps_twin[i]):
+                cps_twin[i] = presumed_older
+            presumed_older = cps_twin[i]
         
     
 def main(data_file="C:\\Users\\Admin\\Documents\\python\\dgm_example_5.npy"):       
@@ -190,48 +207,26 @@ def main(data_file="C:\\Users\\Admin\\Documents\\python\\dgm_example_5.npy"):
     while(len(cornerpoints) != 0): #We want to apply the new elderly rule locally.
         selected_cornerpoints = select(cornerpoints, p_min) #With the function 
         selections += [selected_cornerpoints]               #select, we divide
-        cornerpoints = [cp for cp in cornerpoints           #the diagram into
-                        if cp not in selected_cornerpoints] #"cornerpoint clusters" 
+        cornerpoints = [cp for cp in cornerpoints           #the diagram into groups
+                        if cp not in selected_cornerpoints] #"nearby cornerpoints" 
         cornerpoints = sorted(cornerpoints)                 #ordered by level 
                                                             #with infinity-distance 
                                                             #from the point 
-                                                            #with minimum level 
-                                                            #of the cluster 
+                                                            #with the minimum level 
+                                                            #of each group 
                                                             #less than the 
                                                             #minimum persistence 
-                                                            #of a point of the
+                                                            #of a point in the
                                                             #entire diagram.
         
-        
-    #We obtain the list selections whose elements are the lists of cornerpoints of each "cluster"
-    #ordered by level.
-    #If necessary, we can represent each cluster in a dataframe, using the following code 
-    dataframes = []
-        
-    for c in range(len(selections)):
-        ids = [selections[c][i].id for i in range(len(selections[c]))]
-        xs = [selections[c][i].x for i in range(len(selections[c]))]
-        ys = [selections[c][i].y for i in range(len(selections[c]))]
-        levels = [selections[c][i].level for i in range(len(selections[c]))]
-        mults = [selections[c][i].mult for i in range(len(selections[c]))]
-        d = {"id": ids, "x": xs, "y": ys, "level": levels, "mult": mults}
-        dataframe = pd.DataFrame(d, index=range(1, len(selections[c])+1))
-        dataframes += [dataframe]
+    #We obtain the list selections whose elements are the lists of cornerpoints 
+    #of each "cluster" ordered by level.
         
     print([cp.id for cp in selections[0]])
     print(selections[0])
     
-    for c in range(len(selections)): #Local application
-        #for (cp1, cp2) in zip(selections[c], selections[c][1:]):
-            #fanne una copia e vedi se selections rimane uguale dopo il ciclo
-        selection_twin = selections[c].copy()   
-        presumed_older = selection_twin[0]
-        for i in range(1, len(selections[c])):
-            merge2(presumed_older, selection_twin[i])
-            print(presumed_older.id, selection_twin[i].id)
-            if presumed_older.is_older2(selection_twin[i]):
-                selection_twin[i] = presumed_older
-            presumed_older = selection_twin[i]
+    for c in range(len(selections)): #Local application of the new elderly rule
+        merge_list(selections[c])
             
     print([[selection[i].id for i in range(len(selection))] for selection in selections])    
     cum_mults = [[(cp.id, cp.mult) 
@@ -243,8 +238,7 @@ def main(data_file="C:\\Users\\Admin\\Documents\\python\\dgm_example_5.npy"):
                      for cp in selections[c]} 
                         for c in range(len(selections))]
     print(dct2)
-
-                                     
+                               
 
 if __name__=="__main__":
     main()

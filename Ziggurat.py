@@ -153,7 +153,10 @@ def merge2(cp1, cp2):
     return ([cp1.mult, cp1.merges_with2], [cp2.mult, cp2.merges_with2])
         
     
-def select(cps, p_min): #select points to 
+def select(cps, p_min): #to use for selecting cornerpoints 
+                        #from a list to form groups
+                        #based on the minimum distance from  
+                        #the minimum cornerpoint of each group 
     """"
     Parameters
     ----------

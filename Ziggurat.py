@@ -7,16 +7,6 @@ Created on Sun Jan 16 18:10:41 2022
 
 import numpy as np
 import itertools  
-import pandas as pd
-
-import time
-import warnings
-import matplotlib.pyplot as plt
-
-from sklearn import cluster, datasets, mixture
-from sklearn.neighbors import kneighbors_graph
-from sklearn.preprocessing import StandardScaler
-from itertools import cycle, islice
 
 
 class Cornerpoint:
@@ -26,8 +16,8 @@ class Cornerpoint:
         self.y = y
         self.level = level
         self.mult = mult
-        self.merges_with = [self] #original elderly rule
-        self.merges_with2 = [self] #new elderly rule
+        self.merges_with = [self] #for the original elderly rule
+        self.merges_with2 = [self] #for the new elderly rule
         
     @property
     def persistence(self):
@@ -107,7 +97,10 @@ class Cornerpoint:
         
         
     def __repr__(self):
-        return "Cornerpoint.\nx: {}\ty: {}\nlevel: {}\nmult: {}\n".format(self.x, self.y, self.level, self.mult)
+        return "Cornerpoint.\nx: {}\ty: {}\nlevel: {}\nmult: {}\n".format(self.x, 
+                                                                          self.y, 
+                                                                          self.level, 
+                                                                          self.mult)
 
 def merge(cp):
     support = -1

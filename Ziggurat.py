@@ -6,7 +6,10 @@ Created on Sun Jan 16 18:10:41 2022
 """
 
 import numpy as np
-import itertools  
+import itertools
+import matplotlib.pyplot as plt
+from matplotlib import cm
+
 
 
 class Cornerpoint:
@@ -87,7 +90,7 @@ class Cornerpoint:
             other.merges_with.append(self)
         else:
             self.merges_with.append(other)
-        return  self.level, other.merges_with, self.merges_with
+
     
     def is_older2(self, other):
         if self.mult != other.mult:
@@ -119,8 +122,8 @@ def merge(cp):
     return cp.merges_with[ind_min]
 
 def merging_list(d, cp):
-    """"
-    Parameters
+    
+    """Parameters
     ----------
     d: dict
     cp: Cornerpoint
@@ -130,7 +133,7 @@ def merging_list(d, cp):
     list
     """
     merge_list = [cp.id]
-    while cp.level != np.inf:
+    while(cp.level != np.inf):
         cp = d[cp.id]
         merge_list += [cp.id]
     
@@ -143,7 +146,6 @@ def merge2(cp1, cp2):
     else:
         cp1.merges_with2.append(cp2)
         cp2.mult = cp1.mult + cp2.mult
-    return ([cp1.mult, cp1.merges_with2], [cp2.mult, cp2.merges_with2])
         
     
 def select(cps, p_min): #to use for selecting cornerpoints 
@@ -173,31 +175,70 @@ def merge_list(cps): #update mergings and multiplicities according to the new el
     presumed_older = cps_twin[0]
     for i in range(1, len(cps)):
             merge2(presumed_older, cps_twin[i])
-            print(presumed_older.id, cps_twin[i].id)
+            #print(presumed_older.id, cps_twin[i].id)
             if presumed_older.is_older2(cps_twin[i]):
                 cps_twin[i] = presumed_older
             presumed_older = cps_twin[i]
-        
+               
     
-def main(data_file="C:\\Users\\Admin\\Documents\\python\\dgm_example_5.npy"):       
+    
+def main(data_file="C:\\Users\\Admin\\Documents\\python\\gurrieri_dataset_npy.npy"):       
     pers_dgm = np.load(data_file)
     cornerpoints = [Cornerpoint(int(p[0]), p[1], p[2], np.inf) for p in pers_dgm] 
     for (cp1, cp2) in itertools.product(cornerpoints, repeat=2):
         if cp1.id != cp2.id:
             cp1.merging_level(cp2)
     
-    cornerpoints = sorted(cornerpoints)
     cornerpoints[-1].level = np.inf
-    print([(cp.id,cp.persistence,cp.level) for cp in cornerpoints])
+    #print([(cp.id, [cp.merges_with[i].id for i in range(len(cp.merges_with))])
+             #for cp in cornerpoints])
+    #print([(cp.id,cp.x,cp.y,cp.level) for cp in cornerpoints])
+    #print(cornerpoints)
+
         
-    dct = {cp.id: merge(cp) for cp in cornerpoints} 
+        
+    #abs_vals = [abs(cornerpoints[i].level-cornerpoints[i+1].level)
+                  #for i in range(len(cornerpoints)-1)]
+    #print(abs_vals)
+    #diffs = {cornerpoints[i].id: abs_vals[i] for i in range(len(cornerpoints)-1)}
+    #print(diffs)
+    #sort_diffs = {k: v for k, v in sorted(diffs.items(), key=lambda item: item[1])}
+    #print(sort_diffs)
+    
+    cornerpoints = sorted(cornerpoints)
+    print([cp.id for cp in cornerpoints[::-1]])
+    
+    plt.ion()
+    fig, ax = plt.subplots()
+    x, y = [], []
+    sc = ax.scatter(x, y)
+    colors = []
+    plt.xlim(0, 1)
+    plt.ylim(0, 1)
+    plt.draw()
+    
+    for cp in cornerpoints[::-1]:
+        x.append(cp.x)
+        y.append(cp.y)
+        colors.append(cm.cividis(cp.level))
+        sc.set_offsets(np.c_[np.asarray(x),np.asarray(y)])
+        sc.set_color(colors)
+        fig.canvas.draw_idle()
+        plt.pause(0.1)
+        
+        
+    #X = np.asarray([cp.x for cp in cornerpoints[33:]])
+    #Y = np.asarray([cp.y for cp in cornerpoints[33:]])
+    #plt.scatter(X, Y)
+    #plt.show()
+        
+    """dct = {cp.id: merge(cp) for cp in cornerpoints} 
     for i in range(len(cornerpoints)):
-        merging_sequence = merging_list(dct, cornerpoints[i]) #merging according 
-        print(cornerpoints[i].id, merging_sequence)           #to the original
-                                                              #elderly rule
+        merging_sequence = merging_list(dct, cornerpoints[i])  
+        print(cornerpoints[i].id, merging_sequence)"""        
+     #merging according to the original elderly rule                                                            
         
-    p_min = min({cp.persistence for cp in cornerpoints})
-    print(p_min)
+    p_min = min([cp.persistence for cp in cornerpoints])
     selections = []
     
     while(len(cornerpoints) != 0): #We want to apply the new elderly rule locally.
@@ -218,22 +259,22 @@ def main(data_file="C:\\Users\\Admin\\Documents\\python\\dgm_example_5.npy"):
     #We obtain the list selections whose elements are the lists of cornerpoints 
     #of each "cluster" ordered by level.
         
-    print([cp.id for cp in selections[0]])
-    print(selections[0])
+    #print([cp.id for cp in selections[0]])
+    #rint(selections[0])
     
     for c in range(len(selections)): #Local application of the new elderly rule
         merge_list(selections[c])
             
-    print([[selection[i].id for i in range(len(selection))] for selection in selections])    
-    cum_mults = [[(cp.id, cp.mult) 
-                 for cp in selections[c]] 
-                 for c in range(len(selections))]
-    print(cum_mults)
+    #print([[selection[i].id for i in range(len(selection))] for selection in selections])    
+    #cum_mults = [[(cp.id, cp.mult) 
+                 #for cp in selections[c]] 
+                 #for c in range(len(selections))]
+    #print(cum_mults)
     
-    dct2 = [{cp.id: [cp.merges_with2[i].id for i in range(len(cp.merges_with2))] 
-                     for cp in selections[c]} 
-                        for c in range(len(selections))]
-    print(dct2)
+    #dct2 = [{cp.id: [cp.merges_with2[i].id for i in range(len(cp.merges_with2))] 
+                     #for cp in selections[c]} 
+                        #for c in range(len(selections))]
+    #print(dct2)
                                
 
 if __name__=="__main__":

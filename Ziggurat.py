@@ -179,7 +179,31 @@ def merge_list(cps): #update mergings and multiplicities according to the new el
             if presumed_older.is_older2(cps_twin[i]):
                 cps_twin[i] = presumed_older
             presumed_older = cps_twin[i]
-               
+
+
+def plot_animated_rank(cps):             
+    plt.ion()
+    fig, ax = plt.subplots()
+    x, y = [], []
+    sc = ax.scatter(x, y)
+    colors = []
+    plt.xlim(0, 1)
+    plt.ylim(0, 1)
+    plt.draw()
+    
+    for cp in cps[::-1]:
+        x.append(cp.x)
+        y.append(cp.y)
+        colors.append(cm.cividis(cp.level))
+        sc.set_offsets(np.c_[np.asarray(x),np.asarray(y)])
+        sc.set_color(colors)
+        fig.canvas.draw_idle()
+        plt.pause(0.3)
+        
+        
+def test_plot_animated_rank():
+    cps = [Cornerpoint(i, x, y, l) for i, (x,y,l) in enumerate(np.random.rand(10, 3))]
+    plot_animated_rank(cps)
     
     
 def main(data_file="C:\\Users\\Admin\\Documents\\python\\gurrieri_dataset_npy.npy"):       
@@ -208,23 +232,7 @@ def main(data_file="C:\\Users\\Admin\\Documents\\python\\gurrieri_dataset_npy.np
     cornerpoints = sorted(cornerpoints)
     print([cp.id for cp in cornerpoints[::-1]])
     
-    plt.ion()
-    fig, ax = plt.subplots()
-    x, y = [], []
-    sc = ax.scatter(x, y)
-    colors = []
-    plt.xlim(0, 1)
-    plt.ylim(0, 1)
-    plt.draw()
-    
-    for cp in cornerpoints[::-1]:
-        x.append(cp.x)
-        y.append(cp.y)
-        colors.append(cm.cividis(cp.level))
-        sc.set_offsets(np.c_[np.asarray(x),np.asarray(y)])
-        sc.set_color(colors)
-        fig.canvas.draw_idle()
-        plt.pause(0.1)
+    plot_animated_rank(cps)
         
         
     #X = np.asarray([cp.x for cp in cornerpoints[33:]])

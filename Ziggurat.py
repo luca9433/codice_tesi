@@ -9,6 +9,9 @@ import numpy as np
 import itertools
 import matplotlib.pyplot as plt
 from matplotlib import cm
+from IPython import display
+import imageio
+
 
 
 
@@ -133,7 +136,7 @@ def merging_list(d, cp):
     list
     """
     merge_list = [cp.id]
-    while(cp.level != np.inf):
+    while(len(cp.merges_with) > 1):
         cp = d[cp.id]
         merge_list += [cp.id]
     
@@ -187,8 +190,8 @@ def plot_animated_rank(cps):
     x, y = [], []
     sc = ax.scatter(x, y)
     colors = []
-    plt.xlim(0, 1)
-    plt.ylim(0, 1)
+    plt.xlim(0, 15)
+    plt.ylim(0, 20)
     plt.draw()
     
     for cp in cps[::-1]:
@@ -199,6 +202,8 @@ def plot_animated_rank(cps):
         sc.set_color(colors)
         fig.canvas.draw_idle()
         plt.pause(0.3)
+        display.clear_output(wait=True)
+        plt.show()
         
         
 def test_plot_animated_rank():
@@ -206,14 +211,13 @@ def test_plot_animated_rank():
     plot_animated_rank(cps)
     
     
-def main(data_file="C:\\Users\\Admin\\Documents\\python\\gurrieri_dataset_npy.npy"):       
+def main(data_file="C:\\Users\\Admin\\Documents\\python\\dgm_Massimo.npy"):       
     pers_dgm = np.load(data_file)
     cornerpoints = [Cornerpoint(int(p[0]), p[1], p[2], np.inf) for p in pers_dgm] 
     for (cp1, cp2) in itertools.product(cornerpoints, repeat=2):
         if cp1.id != cp2.id:
             cp1.merging_level(cp2)
-    
-    cornerpoints[-1].level = np.inf
+
     #print([(cp.id, [cp.merges_with[i].id for i in range(len(cp.merges_with))])
              #for cp in cornerpoints])
     #print([(cp.id,cp.x,cp.y,cp.level) for cp in cornerpoints])
@@ -232,18 +236,25 @@ def main(data_file="C:\\Users\\Admin\\Documents\\python\\gurrieri_dataset_npy.np
     cornerpoints = sorted(cornerpoints)
     print([cp.id for cp in cornerpoints[::-1]])
     
-    plot_animated_rank(cps)
-        
+    plot_animated_rank(cornerpoints)
+    
+    #Build GIF
+    with imageio.get_writer('mygifM2.gif', mode='I') as writer:
+        for filename in ["M2_"+str(d)+'.png' for d in range(len(cornerpoints))]:
+            image = imageio.imread(filename)
+            writer.append_data(image)
+    
+    #test_plot_animated_rank    
         
     #X = np.asarray([cp.x for cp in cornerpoints[33:]])
     #Y = np.asarray([cp.y for cp in cornerpoints[33:]])
     #plt.scatter(X, Y)
     #plt.show()
         
-    """dct = {cp.id: merge(cp) for cp in cornerpoints} 
+    dct = {cp.id: merge(cp) for cp in cornerpoints} 
     for i in range(len(cornerpoints)):
         merging_sequence = merging_list(dct, cornerpoints[i])  
-        print(cornerpoints[i].id, merging_sequence)"""        
+        print(cornerpoints[i].id, merging_sequence)        
      #merging according to the original elderly rule                                                            
         
     p_min = min([cp.persistence for cp in cornerpoints])

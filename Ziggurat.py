@@ -9,13 +9,14 @@ import numpy as np
 import itertools
 import matplotlib.pyplot as plt
 from matplotlib import cm
-from IPython import display
 import imageio
+#from IPython import display
 
 
 
 
 class Cornerpoint:
+    
     def __init__(self, id, x, y, level, mult=1):
         self.id = id
         self.x = x
@@ -24,6 +25,7 @@ class Cornerpoint:
         self.mult = mult
         self.merges_with = [self] #for the original elderly rule
         self.merges_with2 = [self] #for the new elderly rule
+        self.above_gap = False
         
     @property
     def persistence(self):
@@ -103,7 +105,9 @@ class Cornerpoint:
         
         
     def __repr__(self):
-        return "Cornerpoint.\nx: {}\ty: {}\nlevel: {}\nmult: {}\n".format(self.x, 
+        return "Cornerpoint.\nid: {}\nx: {}\ty: {}\nlevel: {}\nmult: {}\n".format(
+                                                                          self.id,
+                                                                          self.x, 
                                                                           self.y, 
                                                                           self.level, 
                                                                           self.mult)
@@ -182,6 +186,25 @@ def merge_list(cps): #update mergings and multiplicities according to the new el
             if presumed_older.is_older2(cps_twin[i]):
                 cps_twin[i] = presumed_older
             presumed_older = cps_twin[i]
+            
+def widest_gap_cp(cps):
+    """
+    cps: list (of Cornerpoint objects)
+    """
+    cps = sorted(cps)[::-1]
+    gaps_dct = {i: abs(cps[i].level - cps[i+1].level) 
+                for i in range(1,len(cps)-1)}
+    sorted_gaps_dct = {k: v for k, v in sorted(gaps_dct.items(),  
+                                              key=lambda item: item[1])}
+    return cps[list(sorted_gaps_dct)[-1]]
+
+def Kurlin_select(cp, cps):
+    cps = sorted(cps)[::-1]
+    if cp >= widest_gap_cp(cps):
+        cp.above_gap = True
+    else:
+        cp.above_gap = False
+        
 
 
 def plot_animated_rank(cps):             
@@ -197,18 +220,24 @@ def plot_animated_rank(cps):
     for cp in cps[::-1]:
         x.append(cp.x)
         y.append(cp.y)
-        colors.append(cm.cividis(cp.level))
+        colors.append(cm.Set1(cp.level))
         sc.set_offsets(np.c_[np.asarray(x),np.asarray(y)])
         sc.set_color(colors)
         fig.canvas.draw_idle()
         plt.pause(0.3)
-        display.clear_output(wait=True)
+        #display.clear_output(wait=True)
         plt.show()
         
         
 def test_plot_animated_rank():
     cps = [Cornerpoint(i, x, y, l) for i, (x,y,l) in enumerate(np.random.rand(10, 3))]
     plot_animated_rank(cps)
+    
+def build_GIF(cps): 
+    with imageio.get_writer('mygifM.gif', mode='I') as writer:
+        for filename in [str(d)+'.png' for d in range(len(cps))]:
+            image = imageio.imread(filename)
+            writer.append_data(image)
     
     
 def main(data_file="C:\\Users\\Admin\\Documents\\python\\dgm_Massimo.npy"):       
@@ -234,13 +263,14 @@ def main(data_file="C:\\Users\\Admin\\Documents\\python\\dgm_Massimo.npy"):
     #print(sort_diffs)
     
     cornerpoints = sorted(cornerpoints)
-    print([cp.id for cp in cornerpoints[::-1]])
+    print([cp for cp in cornerpoints[::-1]])
+    print(widest_gap_cp(cornerpoints))
     
     plot_animated_rank(cornerpoints)
     
     #Build GIF
-    with imageio.get_writer('mygifM2.gif', mode='I') as writer:
-        for filename in ["M2_"+str(d)+'.png' for d in range(len(cornerpoints))]:
+    with imageio.get_writer('mygif_gap.gif', mode='I') as writer:
+        for filename in ["gap"+str(d)+'.png' for d in range(len(cornerpoints))]:
             image = imageio.imread(filename)
             writer.append_data(image)
     

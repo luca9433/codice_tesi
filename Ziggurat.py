@@ -269,8 +269,8 @@ def main(data_file="C:\\Users\\Admin\\Documents\\python\\dgm_Massimo.npy"):
     plot_animated_rank(cornerpoints)
     
     #Build GIF
-    with imageio.get_writer('mygif_gap.gif', mode='I') as writer:
-        for filename in ["gap"+str(d)+'.png' for d in range(len(cornerpoints))]:
+    with imageio.get_writer('mygif_gap_1D.gif', mode='I') as writer:
+        for filename in ["gap_1D"+str(d)+'.png' for d in range(len(cornerpoints))]:
             image = imageio.imread(filename)
             writer.append_data(image)
     

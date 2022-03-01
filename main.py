@@ -8,58 +8,17 @@ import pandas as pd
 import os
 import numpy as np
 import matplotlib.pyplot as plt
-import matplotlib.colors as mcolors
-import scipy
-from scipy import ndimage 
-import PIL
 
-import librosa 
-import librosa.display
-import IPython.display as ipd
-
-import persim
-from ripser import ripser, lower_star_img
-from persim import PersistenceImager, plot_diagrams
-import gudhi
-from itertools import product
-
-import time
-import numpy as np
-from sklearn import datasets
-from scipy.stats import multivariate_normal as mvn
-import matplotlib.pyplot as plt
-
-
-
-from pylab import  show
 
 from sklearn.datasets import load_digits
 from sklearn.model_selection import train_test_split, cross_val_score
 from sklearn.preprocessing import StandardScaler 
 import seaborn as sns
-from sklearn.neighbors import KNeighborsClassifier
 from sklearn.svm import SVC
-import h5py
-import matplotlib
-import matplotlib.pyplot as plt
-import matplotlib.cm as cm
 import umap.umap_ as umap
-import os
-from pathlib import Path
-import math
-import requests
-
-
-from sklearn.datasets import load_digits
-from sklearn.model_selection import train_test_split, cross_val_score
-from sklearn.preprocessing import StandardScaler 
-import seaborn as sns
-from sklearn.neighbors import KNeighborsClassifier
-from sklearn.svm import SVC
 import cv2
 
 from sklearn.pipeline import make_pipeline
-from sklearn.svm import SVC
 from sklearn.model_selection import StratifiedKFold
 
 from sklearn.model_selection import train_test_split
@@ -182,7 +141,5 @@ def main(path_to_data_folder="C:\\Users\\Admin\\Documents\\python"):
                   plot_name="PIs_")
         
     
-    
-
 if __name__=="__main__":
     main()

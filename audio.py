@@ -4,67 +4,11 @@ Created on Sat Sep 25 23:54:50 2021
 
 @author: Admin
 """
-import pandas as pd
+
 import os
 import numpy as np
-import matplotlib.pyplot as plt
-import matplotlib.colors as mcolors
-import scipy
-from scipy import ndimage 
-import PIL
-
 import librosa 
 import librosa.display
-import IPython.display as ipd
-
-import persim
-from ripser import ripser, lower_star_img
-from persim import PersistenceImager, plot_diagrams
-import gudhi
-from itertools import product
-
-import time
-import numpy as np
-from sklearn import datasets
-from scipy.stats import multivariate_normal as mvn
-import matplotlib.pyplot as plt
-
-
-
-from pylab import  show
-
-from sklearn.datasets import load_digits
-from sklearn.model_selection import train_test_split, cross_val_score
-from sklearn.preprocessing import StandardScaler 
-import seaborn as sns
-from sklearn.neighbors import KNeighborsClassifier
-from sklearn.svm import SVC
-import h5py
-import matplotlib
-import matplotlib.pyplot as plt
-import matplotlib.cm as cm
-import umap.umap_ as umap
-import os
-from pathlib import Path
-import math
-import requests
-
-
-from sklearn.datasets import load_digits
-from sklearn.model_selection import train_test_split, cross_val_score
-from sklearn.preprocessing import StandardScaler 
-import seaborn as sns
-from sklearn.neighbors import KNeighborsClassifier
-from sklearn.svm import SVC
-import cv2
-
-from sklearn.pipeline import make_pipeline
-from sklearn.svm import SVC
-from sklearn.model_selection import StratifiedKFold
-
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import confusion_matrix
-from sklearn.metrics import accuracy_score
 
 def create_audio_object(data):
     """
@@ -93,7 +37,7 @@ def create_audio_object(data):
     signal, sr = librosa.load(data)
     return signal, sr
 
-
+#The following function return sempling rates for audio track of the GTZAN dataset
     
 def sampling_rates(path_folders="C:\\Users\\Admin\\Documents\\python\\Data\\genres_original"):
     genre_folders = [genre for genre in os.listdir(path_folders) if "idea" not in genre]
@@ -101,13 +45,17 @@ def sampling_rates(path_folders="C:\\Users\\Admin\\Documents\\python\\Data\\genr
     for genre in genre_folders:
         g=os.path.join(path_folders,genre)
         for i in os.listdir(g):
-            sr.append(create_audio_object(os.path.join(g,str(i)))[1])#to do: verificare se posso usare create_audio_object
+            sr.append(create_audio_object(os.path.join(g,str(i)))[1])
     return sr
+
+#The following fucntion can extract mfccs from an input audio file.
 
 def extract_mfccs(data):#extracts 128 mfccs from an audio wav file 
     signal, sr = librosa.load(data)
     mfccs = librosa.feature.mfcc(signal, sr=sr, n_mfcc=128)
     return(mfccs)
+
+#The following function has been used to save mfccs extracted from audio file in GTZAN.
 
 def save_mfccs(path_to_genres_folder="C:\\Users\\Admin\\Documents\\python\\Data\\genres_original",
                saving_path="C:\\Users\\Admin\\Documents\\python"):#saves mfccs extracted from audio tracks of the GTZAN dataset in the directory 

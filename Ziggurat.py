@@ -36,9 +36,8 @@ class Cornerpoint:
     def plateau_merge(self):
         return self.persistence < self.level
     
-    @property
-    def merging_info(self):
-        return self.merges_at, self.merges_with
+    #The following __**__ functions define an order for objects of the class 
+    #Cornerpoint based on the magnitude of the attribute "level".
     
     #The following functions define an order for cornerpoints by level.
     
@@ -60,22 +59,30 @@ class Cornerpoint:
     def __ne__(self, other):
         return self.x != other.x or self.y != other.y
     
+    #triangle Ci:
+    
     def upside_triangle(self, other):
         return ((other.x < self.x) and
                 (other.persistence - self.persistence > 0) and 
                 (other.x > 2*self.x - self.y) and (other.y <= self.y) and
                 (self.x - other.x < self.level))
+    
+    #triangle Bi:
         
     def downside_triangle(self, other):
         return ((other.y > self.y) and
                 (other.persistence - self.persistence >= 0) and
                 (other.y < 2*self.y - self.x) and (other.x >= self.x) and
                 (other.y - self.y < self.level))
+    
+    #triangle Di:
         
     def case3(self, other):
         return ((other.y > self.y) and (other.x < self.x) and 
                 (other.persistence < 2*self.persistence) and
                 (other.persistence - self.persistence < self.level))
+    
+    #elderly rule for components of the Ziggurat:
     
     def is_older(self, other): #classic elderly rule 
         if self.persistence != other.persistence:
@@ -84,6 +91,8 @@ class Cornerpoint:
             return self.x > other.x
         else: 
             return True
+        
+    #computing level of the first merging of a cornerpoint: 
     
     def merging_level(self, other): #computes the level at which "self" merges with "other" 
         if self.upside_triangle(other): #(with the plateau if "other" is not in "self"'s the trapezoidal region) )
@@ -98,24 +107,56 @@ class Cornerpoint:
             other.merges_with.append(self)
         else:
             self.merges_with.append(other)
+            
+    #An extension of the elderly rule using the multiplicity:
 
     
     def is_older2(self, other): #new elderly rule
         if self.mult != other.mult:
             return self.mult > other.mult
         else:
-            return self.is_older(other)        
+            return self.is_older(other)
+
+    #defining a representation for Cornerpoint objects:        
         
         
     def __repr__(self):
-        return "Cornerpoint.\nid: {}\nx: {}\ty: {}\nlevel: {}\n".format(
-                                                                          self.id,
-                                                                          self.x, 
-                                                                          self.y, 
-                                                                          self.level 
+        return "Cornerpoint.\nid: {}\nx: {}\ty: {}\nlevel: {}\n".format(self.id,
+                                                                        self.x, 
+                                                                        self.y, 
+                                                                        self.level 
                                                                           )
+    
+#The following function can be used to plot persistence diagram having cps as
+#list of cornerpoints.
+    
+def plot_diagram(cps, save_path=None):
+    f, ax = plt.subplots()
+    X = [cp.x for cp in cps]
+    Y = [cp.y for cp in cps]
+    plt.scatter(X, Y)
+    plt.xlabel("x")
+    plt.ylabel("y")
+    if save_path is not None:
+        f.savefig(os.path.join(save_path, "dgm.png"))
+        
+#The following function can be used to create a dataframe containing 
+#cornerpoints of the list cps, according their representation canonized by
+#function Cornerpoint.__repr__ .
+        
+def create_dataframe(cps):
+    ids = [cp.id for cp in cps]
+    xs = [cp.x for cp in cps]
+    ys = [cp.y for cp in cps]
+    levels = [cp.level for cp in cps]
+    d = {"id": ids, "x": xs, "y": ys, "level": levels}
+    dataframe = pd.DataFrame(d, index=range(1, len(cps)+1))
+    print(dataframe.to_latex(index=False))
+    
+ #The following function takes the minimum cornerpoint among those greater than 
+ #cp in cp.merges_with.
 
-def merge(cp): #takes the minimum cornerpoint among those greater than cp in cp.merges_with
+def merge(cp):
     support = -1
     ind_min = 0
     
@@ -131,8 +172,11 @@ def merge(cp): #takes the minimum cornerpoint among those greater than cp in cp.
                     
     return cp.merges_with[ind_min]
 
-def merging_list(d, cp): #forms a list of consecutive mergings starting with cornerpoint cp
-                            #and carrying on with the minimum identified by fucntion merge and so on...
+#The following function forms a list of consecutive mergings starting with 
+#cornerpoint cp and carrying on with the minimum identified by fucntion 
+#merge and so on...
+
+def merging_list(d, cp): 
     """Parameters            
     ----------
     d: dict
@@ -149,47 +193,9 @@ def merging_list(d, cp): #forms a list of consecutive mergings starting with cor
     
     return merge_list
 
-def merge2(cp1, cp2): #update attributes merge_with2 and mult according to the new elderly rule
-    if cp1.is_older2(cp2):
-        cp2.merges_with2.append(cp1)
-        cp1.mult = cp1.mult + cp2.mult
-    else:
-        cp1.merges_with2.append(cp2)
-        cp2.mult = cp1.mult + cp2.mult
-        
-    
-def select(cps, p_min): #to use for selecting cornerpoints 
-                        #from a list to form groups
-                        #based on the minimum distance from  
-                        #the minimum cornerpoint of each group 
-    """"
-    Parameters
-    ----------
-    cps: list
-    p_min: float
-    
-    Returns
-    -------
-    list
-    
-    """
-    cp_min = min(cps)
-    selected_cps = [cp for cp in cps if max({abs(cp.x - cp_min.x),
-                                             abs(cp.y - cp_min.y)}) < p_min]
-            
-    return sorted(selected_cps)
+#The following fucntion returns cornerpoint element of a list cps 
+#which are above the widest level gap.
 
-def merge_list(cps): #update mergings and multiplicities according to the new elderly rule
-
-    cps_twin = cps.copy()   
-    presumed_older = cps_twin[0]
-    for i in range(1, len(cps)):
-            merge2(presumed_older, cps_twin[i])
-            #print(presumed_older.id, cps_twin[i].id)
-            if presumed_older.is_older2(cps_twin[i]):
-                cps_twin[i] = presumed_older
-            presumed_older = cps_twin[i]
-            
 def widest_gap_cp(cps):
     """
     cps: list (of Cornerpoint objects)
@@ -201,6 +207,10 @@ def widest_gap_cp(cps):
                                               key=lambda item: item[1])}
     return cps[list(sorted_gaps_dct)[-1]]
 
+#The following fucntion attributes to the attribute above_gap of cp value  True  
+#if cp is above the widest gap of cornerpoint in the list cps, False 
+#otherwise.
+
 def Kurlin_select(cp, cps):
     cps = sorted(cps)[::-1]
     if cp >= widest_gap_cp(cps):
@@ -208,7 +218,9 @@ def Kurlin_select(cp, cps):
     else:
         cp.above_gap = False
         
-
+#The following function can be used to obtain a sequence of images of the 
+#persistence diagram having the element of list cps as cornerpoints 
+#with cornerpoints adding as their level decreases.
 
 def plot_animated_rank(cps):             
     plt.ion()
@@ -233,14 +245,22 @@ def plot_animated_rank(cps):
         
         
 def test_plot_animated_rank():
-    cps = [Cornerpoint(i, x, y, l) for i, (x,y,l) in enumerate(np.random.rand(10, 3))]
+    cps = [Cornerpoint(i, x, y, l) 
+           for i, (x,y,l) in enumerate(np.random.rand(10, 3))]
     plot_animated_rank(cps)
+    
+#Use the following function to create an animated GIF with the sequence of
+#images obtained with function plot.animated_rank.
     
 def build_GIF(cps): 
     with imageio.get_writer('mygifM.gif', mode='I') as writer:
         for filename in [str(d)+'.png' for d in range(len(cps))]:
             image = imageio.imread(filename)
             writer.append_data(image)
+            
+#The following function The following function generates a persistence diagram 
+#differentiating the cornerpoints according to whether they are above or below 
+#the widest gap.
             
 def plot_gap(cps, save_path=None):
     cps_a = [c for c in cps if c.above_gap]
@@ -254,6 +274,9 @@ def plot_gap(cps, save_path=None):
     if save_path is not None:
         plt.savefig(os.path.join(save_path, "plot_gap.png"))
         
+#The following function does tha same of the function above but in the Ziggurat's
+#persistence diagram (where ordinates are given by cornerpoints' levels).
+        
 def plot_gap_ZigguratPD(cps, save_path=None):
     cps_a = [c for c in cps if c.above_gap]
     cps_b = [c for c in cps if not c.above_gap]
@@ -264,116 +287,119 @@ def plot_gap_ZigguratPD(cps, save_path=None):
     f.legend()
     if save_path is not None:
         plt.savefig(os.path.join(save_path, "plot_gap_1D.png"))
+    
+#The following function updates attributes merge_with2 and mult 
+#according to the new elderly rule
+
+def merge2(cp1, cp2): 
+    if cp1.is_older2(cp2):
+        cp2.merges_with2.append(cp1)
+        cp1.mult = cp1.mult + cp2.mult
+    else:
+        cp1.merges_with2.append(cp2)
+        cp2.mult = cp1.mult + cp2.mult
         
-def plot_diagram(cps, save_path=None):
-    f, ax = plt.subplots()
-    X = [cp.x for cp in cps]
-    Y = [cp.y for cp in cps]
-    plt.scatter(X, Y)
-    plt.xlabel("x")
-    plt.ylabel("y")
-    if save_path is not None:
-        f.savefig(os.path.join(save_path, "dgm_Masimo_repr.png"))
+#to use for selecting cornerpoints from a list to form groups
+#based on the minimum distance from the minimum cornerpoint of each group
         
-def create_dataframe(cps):
-    ids = [cp.id for cp in cps]
-    xs = [cp.x for cp in cps]
-    ys = [cp.y for cp in cps]
-    levels = [cp.level for cp in cps]
-    d = {"id": ids, "x": xs, "y": ys, "level": levels}
-    dataframe = pd.DataFrame(d, index=range(1, len(cps)+1))
-    print(dataframe.to_latex(index=False))
+    
+def select(cps, p_min):  
+    """"
+    Parameters
+    ----------
+    cps: list
+    p_min: float
+    
+    Returns
+    -------
+    list
+    
+    """
+    cp_min = min(cps)
+    selected_cps = [cp for cp in cps if max({abs(cp.x - cp_min.x),
+                                             abs(cp.y - cp_min.y)}) < p_min]
+            
+    return sorted(selected_cps)
+
+#update mergings and multiplicities according to the new elderly rule
+
+def merge_list(cps): 
+
+    cps_twin = cps.copy()   
+    presumed_older = cps_twin[0]
+    for i in range(1, len(cps)):
+            merge2(presumed_older, cps_twin[i])
+            #print(presumed_older.id, cps_twin[i].id)
+            if presumed_older.is_older2(cps_twin[i]):
+                cps_twin[i] = presumed_older
+            presumed_older = cps_twin[i]
 
     
     
 def main(data_file="C:\\Users\\Admin\\Documents\\python\\dgm_Massimo.npy"):       
     pers_dgm = np.load(data_file)
-    cornerpoints = [Cornerpoint(int(p[0]), p[1], p[2], np.inf) for p in pers_dgm] 
+    cornerpoints = [Cornerpoint(int(p[0]), p[1], p[2], np.inf) 
+                    for p in pers_dgm]
+    
+    plot_diagram(cornerpoints, 
+                 save_path="C:\\Users\\Admin\\Documents\\python\\_codice_tesi_")
+    
+    #For each cornerpoint of the list cornerpoints, compute the level of the 
+    #first merging with another one, using function Cornerpoint.merging_level.
+    
     for (cp1, cp2) in itertools.product(cornerpoints, repeat=2):
         if cp1.id != cp2.id:
             cp1.merging_level(cp2)
-
-    #print([(cp.id, [cp.merges_with[i].id for i in range(len(cp.merges_with))])
-             #for cp in cornerpoints])
-    #print([(cp.id,cp.x,cp.y,cp.level) for cp in cornerpoints])
-    #print(cornerpoints)
-
-        
-        
-    #abs_vals = [abs(cornerpoints[i].level-cornerpoints[i+1].level)
-                  #for i in range(len(cornerpoints)-1)]
-    #print(abs_vals)
-    #diffs = {cornerpoints[i].id: abs_vals[i] for i in range(len(cornerpoints)-1)}
-    #print(diffs)
-    #sort_diffs = {k: v for k, v in sorted(diffs.items(), key=lambda item: item[1])}
-    #print(sort_diffs)
-    
-    plot_diagram(cornerpoints, save_path="C:\\Users\\Admin\\Documents\\python\\_codice_tesi_")
     
     create_dataframe(cornerpoints)
+    
+    #sort cornerpoint by level:
     cornerpoints = sorted(cornerpoints)
+    
+    print(cornerpoints)
+    
+    #To reverse a list l, call l[::-1].
     create_dataframe(cornerpoints[::-1])
-    #print([cp for cp in cornerpoints[::-1]])
+
     print(widest_gap_cp(cornerpoints))
     
-    plot_animated_rank(cornerpoints)
     
-    #Build GIF
-    with imageio.get_writer('mygif_gap_1D.gif', mode='I') as writer:
-        for filename in ["gap_1D"+str(d)+'.png' for d in range(len(cornerpoints))]:
-            image = imageio.imread(filename)
-            writer.append_data(image)
+    #For each cornerpoint, we get the successive merging sequences, #
+    #up to the one with the highest level, which merges with the plateau. 
+    #To do this, we use a dictionary dct, where a key is the 
+    #identificative number of a cornerpoint and the corresponfing value is 
+    #the minimum cornerpoint among those greater than the one considered, 
+    #which can be computed with the "merge" function.
     
-    #test_plot_animated_rank    
-        
-    #X = np.asarray([cp.x for cp in cornerpoints[33:]])
-    #Y = np.asarray([cp.y for cp in cornerpoints[33:]])
-    #plt.scatter(X, Y)
-    #plt.show()
-        
-    dct = {cp.id: merge(cp) for cp in cornerpoints} 
+    dct = {cp.id: merge(cp) for cp in cornerpoints}
+    
+    #merging according to the original elderly rule:
     for i in range(len(cornerpoints)):
         merging_sequence = merging_list(dct, cornerpoints[i])  
         print(cornerpoints[i].id, merging_sequence)        
-     #merging according to the original elderly rule                                                            
+        
+
+    #We want to apply the new elderly rule locally. With the function "select"
+    #we divide the cornerpoints into groups of "nearby cornerpoints" 
+    #ordered by level with infinity-distance from the minimum cornerpoint 
+    #(with respect to level order) of each group less than the 
+    #minimum persistence p_min of a cornerpoint in the entire diagram.                                                         
         
     p_min = min([cp.persistence for cp in cornerpoints])
     selections = []
     
-    while(len(cornerpoints) != 0): #We want to apply the new elderly rule locally.
-        selected_cornerpoints = select(cornerpoints, p_min) #With the function 
-        selections += [selected_cornerpoints]               #select, we divide
-        cornerpoints = [cp for cp in cornerpoints           #the diagram into groups
-                        if cp not in selected_cornerpoints] #"nearby cornerpoints" 
-        cornerpoints = sorted(cornerpoints)                 #ordered by level 
-                                                            #with infinity-distance 
-                                                            #from the point 
-                                                            #with the minimum level 
-                                                            #of each group 
-                                                            #less than the 
-                                                            #minimum persistence 
-                                                            #of a point in the
-                                                            #entire diagram.
+    while(len(cornerpoints) != 0): 
+        selected_cornerpoints = select(cornerpoints, p_min)  
+        selections += [selected_cornerpoints]               
+        cornerpoints = [cp for cp in cornerpoints           
+                        if cp not in selected_cornerpoints]  
+        cornerpoints = sorted(cornerpoints)                 
         
-    #We obtain the list selections whose elements are the lists of cornerpoints 
-    #of each "cluster" ordered by level.
-        
-    #print([cp.id for cp in selections[0]])
-    #rint(selections[0])
-    
-    for c in range(len(selections)): #Local application of the new elderly rule
+    #Local application of the new elderly rule
+    for c in range(len(selections)): 
         merge_list(selections[c])
             
-    #print([[selection[i].id for i in range(len(selection))] for selection in selections])    
-    #cum_mults = [[(cp.id, cp.mult) 
-                 #for cp in selections[c]] 
-                 #for c in range(len(selections))]
-    #print(cum_mults)
-    
-    #dct2 = [{cp.id: [cp.merges_with2[i].id for i in range(len(cp.merges_with2))] 
-                     #for cp in selections[c]} 
-                        #for c in range(len(selections))]
-    #print(dct2)
+   
                                
 
 if __name__=="__main__":

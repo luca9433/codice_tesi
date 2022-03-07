@@ -4,15 +4,12 @@ Created on Sat Sep 25 23:54:50 2021
 
 @author: Admin
 """
+
 import pandas as pd
 import os
 import numpy as np
 import matplotlib.pyplot as plt
 
-
-from sklearn.datasets import load_digits
-from sklearn.model_selection import train_test_split, cross_val_score
-from sklearn.preprocessing import StandardScaler 
 import seaborn as sns
 from sklearn.svm import SVC
 import umap.umap_ as umap
@@ -21,7 +18,7 @@ import cv2
 from sklearn.pipeline import make_pipeline
 from sklearn.model_selection import StratifiedKFold
 
-from sklearn.model_selection import train_test_split
+#from sklearn.model_selection import train_test_split
 from sklearn.metrics import confusion_matrix
 from sklearn.metrics import accuracy_score
 
@@ -128,18 +125,19 @@ def main(path_to_data_folder="C:\\Users\\Admin\\Documents\\python"):
                        for img in genre_imgs]
     flattened_images = np.array([img.flatten() for img in reshaped_images])
     
-    umap_proj_plot(flattened_images,genres,labels) #project PIs on a plane with UMAP's dimension reduction
+    #umap_proj_plot(flattened_images,genres,labels) #project PIs on a plane with UMAP's dimension reduction
         
     cms_test_PIs, accs_test_PIs, cms_train_PIs, accs_train_PIs = cross_validation(SVC(gamma='auto', kernel='rbf'), 
                                                                                   flattened_images, 
                                                                                   classes, 
                                                                                   random_state=None) #PIs classification accuracy 
                                                                              
-    plot_accuracy(accs_test_PIs, 
+    """plot_accuracy(accs_test_PIs, 
                   accs_train_PIs, 
                   save_plot="C:\\Users\\Admin\\Documents\\python", 
-                  plot_name="PIs_")
+                  plot_name="PIs_")"""
         
+    cms_test_PIs, accs_test_PIs, cms_train_PIs, accs_train_PIs
     
 if __name__=="__main__":
     main()

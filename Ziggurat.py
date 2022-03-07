@@ -10,7 +10,8 @@ import itertools
 import matplotlib.pyplot as plt
 from matplotlib import cm
 import imageio
-#from IPython import display
+import os
+import pandas as pd
 
 
 
@@ -38,6 +39,8 @@ class Cornerpoint:
     @property
     def merging_info(self):
         return self.merges_at, self.merges_with
+    
+    #The following functions define an order for cornerpoints by level.
     
     def __eq__(self, other):
         return self.x == other.x and self.y == other.y
@@ -74,7 +77,7 @@ class Cornerpoint:
                 (other.persistence < 2*self.persistence) and
                 (other.persistence - self.persistence < self.level))
     
-    def is_older(self, other):
+    def is_older(self, other): #classic elderly rule 
         if self.persistence != other.persistence:
             return self.persistence > other.persistence
         elif self.x != other.x:
@@ -82,8 +85,8 @@ class Cornerpoint:
         else: 
             return True
     
-    def merging_level(self, other):
-        if self.upside_triangle(other):
+    def merging_level(self, other): #computes the level at which "self" merges with "other" 
+        if self.upside_triangle(other): #(with the plateau if "other" is not in "self"'s the trapezoidal region) )
             self.level = self.x - other.x
         elif self.downside_triangle(other):
             self.level = other.y - self.y
@@ -97,7 +100,7 @@ class Cornerpoint:
             self.merges_with.append(other)
 
     
-    def is_older2(self, other):
+    def is_older2(self, other): #new elderly rule
         if self.mult != other.mult:
             return self.mult > other.mult
         else:
@@ -105,14 +108,14 @@ class Cornerpoint:
         
         
     def __repr__(self):
-        return "Cornerpoint.\nid: {}\nx: {}\ty: {}\nlevel: {}\nmult: {}\n".format(
+        return "Cornerpoint.\nid: {}\nx: {}\ty: {}\nlevel: {}\n".format(
                                                                           self.id,
                                                                           self.x, 
                                                                           self.y, 
-                                                                          self.level, 
-                                                                          self.mult)
+                                                                          self.level 
+                                                                          )
 
-def merge(cp):
+def merge(cp): #takes the minimum cornerpoint among those greater than cp in cp.merges_with
     support = -1
     ind_min = 0
     
@@ -128,9 +131,9 @@ def merge(cp):
                     
     return cp.merges_with[ind_min]
 
-def merging_list(d, cp):
-    
-    """Parameters
+def merging_list(d, cp): #forms a list of consecutive mergings starting with cornerpoint cp
+                            #and carrying on with the minimum identified by fucntion merge and so on...
+    """Parameters            
     ----------
     d: dict
     cp: Cornerpoint
@@ -146,7 +149,7 @@ def merging_list(d, cp):
     
     return merge_list
 
-def merge2(cp1, cp2):
+def merge2(cp1, cp2): #update attributes merge_with2 and mult according to the new elderly rule
     if cp1.is_older2(cp2):
         cp2.merges_with2.append(cp1)
         cp1.mult = cp1.mult + cp2.mult
@@ -225,8 +228,8 @@ def plot_animated_rank(cps):
         sc.set_color(colors)
         fig.canvas.draw_idle()
         plt.pause(0.3)
-        #display.clear_output(wait=True)
         plt.show()
+    
         
         
 def test_plot_animated_rank():
@@ -238,6 +241,49 @@ def build_GIF(cps):
         for filename in [str(d)+'.png' for d in range(len(cps))]:
             image = imageio.imread(filename)
             writer.append_data(image)
+            
+def plot_gap(cps, save_path=None):
+    cps_a = [c for c in cps if c.above_gap]
+    cps_b = [c for c in cps if not c.above_gap]
+    f, ax = plt.subplots()
+    ax.scatter([c.x for c in cps_a], [c.y for c in cps_a], label="above gap")
+    ax.scatter([c.x for c in cps_b], [c.y for c in cps_b], label="below gap")
+    plt.xlabel("x")
+    plt.ylabel("y")
+    f.legend()
+    if save_path is not None:
+        plt.savefig(os.path.join(save_path, "plot_gap.png"))
+        
+def plot_gap_ZigguratPD(cps, save_path=None):
+    cps_a = [c for c in cps if c.above_gap]
+    cps_b = [c for c in cps if not c.above_gap]
+    f, ax = plt.subplots()
+    ax.scatter([0 for c in cps_a], [c.level for c in cps_a], label="above gap")
+    ax.scatter([0 for c in cps_b], [c.level for c in cps_b], label="below gap")
+    plt.ylabel("level")
+    f.legend()
+    if save_path is not None:
+        plt.savefig(os.path.join(save_path, "plot_gap_1D.png"))
+        
+def plot_diagram(cps, save_path=None):
+    f, ax = plt.subplots()
+    X = [cp.x for cp in cps]
+    Y = [cp.y for cp in cps]
+    plt.scatter(X, Y)
+    plt.xlabel("x")
+    plt.ylabel("y")
+    if save_path is not None:
+        f.savefig(os.path.join(save_path, "dgm_Masimo_repr.png"))
+        
+def create_dataframe(cps):
+    ids = [cp.id for cp in cps]
+    xs = [cp.x for cp in cps]
+    ys = [cp.y for cp in cps]
+    levels = [cp.level for cp in cps]
+    d = {"id": ids, "x": xs, "y": ys, "level": levels}
+    dataframe = pd.DataFrame(d, index=range(1, len(cps)+1))
+    print(dataframe.to_latex(index=False))
+
     
     
 def main(data_file="C:\\Users\\Admin\\Documents\\python\\dgm_Massimo.npy"):       
@@ -262,8 +308,12 @@ def main(data_file="C:\\Users\\Admin\\Documents\\python\\dgm_Massimo.npy"):
     #sort_diffs = {k: v for k, v in sorted(diffs.items(), key=lambda item: item[1])}
     #print(sort_diffs)
     
+    plot_diagram(cornerpoints, save_path="C:\\Users\\Admin\\Documents\\python\\_codice_tesi_")
+    
+    create_dataframe(cornerpoints)
     cornerpoints = sorted(cornerpoints)
-    print([cp for cp in cornerpoints[::-1]])
+    create_dataframe(cornerpoints[::-1])
+    #print([cp for cp in cornerpoints[::-1]])
     print(widest_gap_cp(cornerpoints))
     
     plot_animated_rank(cornerpoints)
